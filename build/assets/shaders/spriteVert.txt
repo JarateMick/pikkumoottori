@@ -1,0 +1,30 @@
+precision highp float;
+
+attribute vec4 vPosition;
+attribute vec2 vTexCoord;
+attribute float texId;
+attribute vec4 color;
+
+varying vec2 texCoord;
+varying float textureId;
+varying vec4 colour;
+
+
+uniform mat4 position;
+
+// varying vec4 color;
+// uniform sampler2D textures[8];
+
+void main()
+{
+	gl_Position.xy = (position * vPosition).xy;
+	gl_Position.z = 0.0;
+	gl_Position.w = 1.0;
+	texCoord  = vTexCoord;
+	textureId = texId;
+
+	colour = color;
+	// color = vec4(1.0, 0.5, 1.0, 1.0);
+
+    position;
+}

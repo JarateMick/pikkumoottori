@@ -10,8 +10,11 @@ struct CameraState
 struct Sprites
 {
 	Vec2* positions;
-	unsigned int* colors;
-	unsigned int* ids;
+	Vec2* sizes;
+	vec4* uvs;
+	vec4* colors;
+	int* ids;
+
 	unsigned int count;
 	// rotation jne
 };

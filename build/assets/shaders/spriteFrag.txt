@@ -1,0 +1,42 @@
+
+precision highp float; 
+uniform sampler2D textures[8];
+uniform mat4 position;
+varying vec2 texCoord;
+varying float textureId;
+varying vec4 colour;
+
+void main()
+{
+	vec4 texColor = vec4(1.0, 1.0, textureId / 10.0, 1.0);
+
+    position;
+
+	// if (textureId > 0.0)
+	//{
+
+		int tid = int(textureId - 0.5);
+
+		if (tid == 0)
+			texColor = texture2D(textures[0], texCoord);
+		else if (tid == 1)
+			texColor = texture2D(textures[1], texCoord);
+		else if (tid == 2)
+			texColor = texture2D(textures[2], texCoord);
+		else if (tid == 3)
+			texColor = texture2D(textures[3], texCoord);
+		else if (tid == 4)
+			texColor = texture2D(textures[4], texCoord);
+		else if (tid == 5)
+			texColor = texture2D(textures[5], texCoord);
+		else if (tid == 6)
+			texColor = texture2D(textures[6], texCoord);
+		else if (tid == 7)
+			texColor = texture2D(textures[7], texCoord);
+	//	}
+		
+		// texColor = texture2D(textures[2], texCoord);
+		gl_FragColor = texColor * colour;
+
+//		gl_FragColor = c1 * (1.0 - intensity * 2.0) + color2 * intensity * 2.0;
+}
