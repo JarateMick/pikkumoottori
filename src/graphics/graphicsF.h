@@ -26,6 +26,7 @@ struct GraphicsContext
 	bool updateViewPort;
 	CameraState camera;
 	Sprites sprites;
+	void* window;
 };
 
 void zoom(CameraState* camera, float factor)

@@ -5,7 +5,7 @@
 #include "graphicsF.h"
 #include "shader.cpp"
 
-constexpr int MAX_SPRITES = 100000;
+constexpr int MAX_SPRITES = 500001;
 struct VertexData
 {
 	float pos[MAX_SPRITES * 12];
@@ -25,6 +25,11 @@ struct SpriteBatch
 	VertexData vertexData;
 };
 
+struct Camera2D
+{
+	glm::mat4 cameraMatrix;
+	glm::mat4 orthoMatrix;
+};
 
 EXPORT INIT_GAME(gameInit);
 EXPORT UPDATE_GAME(gameUpdate);

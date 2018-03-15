@@ -8,9 +8,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "../Imgui/imgui.h"
+#include "../Imgui/imgui_impl_sdl_gl3.cpp"
 
 
 static SpriteBatch spriteBatch;
+static Camera2D camera;
 
 constexpr int POS = 0;
 constexpr int UVS = 1;
@@ -207,16 +209,16 @@ void renderBatch(Sprites* sprites, SpriteBatch* sb, glm::mat4* cam)
 	int count = sprites->count;
 	VertexData* vertexData = &sb->vertexData;
 	glBindBuffer(GL_ARRAY_BUFFER, sb->buffers[POS]);
-	glBufferData(GL_ARRAY_BUFFER, count * sizeof(float), vertexData->pos, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, count * sizeof(float) * 3 * 4, vertexData->pos, GL_DYNAMIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, sb->buffers[UVS]);
-	glBufferData(GL_ARRAY_BUFFER, count * sizeof(float), vertexData->uvs, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, count * sizeof(float) * 2 * 4, vertexData->uvs, GL_DYNAMIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, sb->buffers[ID]);
-	glBufferData(GL_ARRAY_BUFFER, count * sizeof(float), vertexData->ids, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, count * sizeof(float) * 4, vertexData->ids, GL_DYNAMIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, sb->buffers[COLOR]);
-	glBufferData(GL_ARRAY_BUFFER, count * sizeof(unsigned int), vertexData->colors, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, count * sizeof(unsigned int) * 4, vertexData->colors, GL_DYNAMIC_DRAW);
 	glCheckError();
 
 	sb->shader.use();
@@ -290,8 +292,10 @@ static Texture2D testTexture()
 	return loadTexture(1, 1, 3, pixels, false, false);
 }
 
+void initCamera(Camera2D* cam, int screenW, int screenH);
 EXPORT INIT_GAME(initGame)
 {
+	GraphicsContext* c = &engine->context;
 	if (!engine->context.initted)
 	{
 		LOGI("Graphics init\n");
@@ -310,16 +314,50 @@ EXPORT INIT_GAME(initGame)
 		// init sprite batch
 		initSpriteBatch(&spriteBatch);
 
+		//ImGui::StyleColorsClassic();
+		initCamera(&camera, (int)engine->windowDims.x, (int)engine->windowDims.y);
+
 		engine->context.initted = true;
 	}
 }
 
 EXPORT UPDATE_GAME(updateGame)
 {
-	//	LOGI("update \n");
+	auto* c = &engine->context;
+
 }
 
-constexpr int BENCH_COUNT = 100000;
+void initCamera(Camera2D* cam, int screenW, int screenH)
+{
+	cam->orthoMatrix = glm::ortho(0.0f, (float)screenW, 0.0f, (float)screenH);
+}
+
+void updateCamera(Camera2D* cam, CameraState* state, Vec2* screen)
+{
+	if (state->needUpdate)
+	{
+			glm::vec3 translate(-state->position.x + screen->x / 2, -state->position.y + screen->y / 2, 0.0f);  //centeroi cameran myösä
+			cam->cameraMatrix = glm::translate(cam->orthoMatrix, translate);
+
+			//glm::mat4 matRoll = glm::mat4(1.0f);
+			//glm::mat4 matPitch = glm::mat4(1.0f);
+			//glm::mat4 matYaw = glm::mat4(1.0f);
+
+			//matRoll  = glm::rotate(matRoll, angle, glm::vec3(0.f, 0.f, 1.0f));
+			//matPitch = glm::rotate(matPitch, pitch, glm::vec3(1.0f, 0.0f, 0.0f));
+			//matYaw   = glm::rotate(matYaw, yaw, glm::vec3(0.0f, 1.0f, 0.0f));
+
+			// glm::mat4 rotate = matRoll * matPitch * matYaw;
+
+			// kun yksi niin normaali eli kerrotaan yhdellä | jos 0.5 zoomattu ulos ja 2.o niiin zoom in
+			glm::vec3 scale(state->scale, state->scale, 0.0f);
+			cam->cameraMatrix = /* rotate * */ glm::scale(glm::mat4(1.0f), scale) * cam->cameraMatrix;
+			//camera scale^^
+			state->needUpdate = false;
+	}
+}
+
+constexpr int BENCH_COUNT = 400000;
 struct Entitys
 {
 	Vec2 pos[BENCH_COUNT];
@@ -359,7 +397,7 @@ EXPORT DRAW_GAME(drawGame)
 
 		for (int i = 0; i < count; ++i)
 		{
-			test->size[i] = { 20.f, 20.f };
+			test->size[i] = { 2.f, 2.f };
 			test->uvs[i] = { 0.f, 0.f, 1.f, 1.f };
 			test->colors[i] = { 1.f, 1.f, 1.f, 1.f };
 		}
@@ -382,6 +420,27 @@ EXPORT DRAW_GAME(drawGame)
 		c->sprites.uvs = test->uvs;
 		c->sprites.count = count;
 	}
+	
+	Vec2 vel = {};
+	float speed = 2.f;
+	auto* controller = &engine->controller;
+	if (controller->cameraMovement[Controller::w])
+	{
+		vel.y += speed;
+	}
+	if (controller->cameraMovement[Controller::s])
+	{
+		vel.y -= speed;
+	}
+	if (controller->cameraMovement[Controller::d])
+	{
+		vel.x += speed;
+	}
+	if (controller->cameraMovement[Controller::a])
+	{
+		vel.x -= speed;
+	}
+	translate(&c->camera, vel);
 
 	for (int i = 0; i < BENCH_COUNT; ++i)
 	{
@@ -406,6 +465,6 @@ EXPORT DRAW_GAME(drawGame)
 
 	prepareBatch(&c->sprites, &spriteBatch);
 
-	auto mat = glm::ortho(0.0f, (float)engine->windowDims.x, 0.0f, (float)engine->windowDims.y);
-	renderBatch(&c->sprites, &spriteBatch, &mat);
+	updateCamera(&camera, &c->camera, &engine->windowDims);
+	renderBatch(&c->sprites, &spriteBatch, &camera.cameraMatrix);
 }

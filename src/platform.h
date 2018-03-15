@@ -69,7 +69,13 @@
 
 struct Controller
 {
+	enum CameraKeys
+	{
+		w, a, s, d
+	};
+
 	bool jump;
+	bool cameraMovement[4];
 };
 
 struct EngineContext

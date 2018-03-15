@@ -5,6 +5,11 @@
 EXPORT INIT_GAME(initGame)
 {
 	LOGI("game init\n");
+
+	GraphicsContext* c = &engine->context;
+
+	zoom(&c->camera, 1.f);
+	
 }
 
 EXPORT UPDATE_GAME(updateGame)

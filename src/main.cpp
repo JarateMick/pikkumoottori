@@ -14,6 +14,15 @@
 
 // #include <glad/glad.h> #include "glad.c"
 
+#include "glad/glad.h"
+#include "glad.c"
+
+#include "Imgui/imgui.h"
+#include "Imgui/imgui_demo.cpp"
+#include "Imgui/imgui_impl_sdl_gl3.cpp"
+
+
+
 
 int main(int argc, char* argv[])
 {
@@ -21,7 +30,7 @@ int main(int argc, char* argv[])
 
 
 	const char* windowName = "hello sdl";
-	int width = 500; int height = 500;
+	int width = 1024; int height = 860;
 
 #ifndef __EMSCRIPTEN__
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -76,6 +85,13 @@ int main(int argc, char* argv[])
 	SDL_GL_MakeCurrent(window, glContex);
 	SDL_GL_SetSwapInterval(0);
 
+	if (!gladLoadGL())
+	{
+		printf("failed to initaliaze GLAD\n");
+		ASSERT(false);
+	}
+
+
 #ifndef __EMSCRIPTEN__
 
 #endif
@@ -95,28 +111,64 @@ int main(int argc, char* argv[])
 	{
 		app.gameInitPtr(&engine);
 	}
-	
+
 	if (graphics.gameDrawPtr)
 	{
 		graphics.gameInitPtr(&engine);
 	}
 
+	ImGui_ImplSdlGL3_Init(window);
+	bool show_demo_window = true;
 
 	while (!quit)
 	{
 		SDL_Event e;
 		while (SDL_PollEvent(&e))
 		{
+			ImGui_ImplSdlGL3_ProcessEvent(&e);
+
 			switch (e.type)
 			{
 			case SDL_QUIT:
 			{
 				quit = true;
 			} break;
+			case SDL_KEYDOWN:
+			case SDL_KEYUP:
+			{
+				bool down = e.key.state;
+				
+				switch (e.key.keysym.scancode)
+				{
+				case SDL_SCANCODE_W:
+					engine.controller.cameraMovement[0] = down; break;
+				case SDL_SCANCODE_A:
+					engine.controller.cameraMovement[1] = down; break;
+				case SDL_SCANCODE_S:
+					engine.controller.cameraMovement[2] = down; break;
+				case SDL_SCANCODE_D:
+					engine.controller.cameraMovement[3] = down; break;
+				default: 
+					break;
+				}
+			}
 			default:
 				break;
 			}
 		}
+		ImGui_ImplSdlGL3_NewFrame(window);
+
+		if (ImGui::Button("Demo Window"))                       // Use buttons to toggle our bools. We could use Checkbox() as well.
+			show_demo_window ^= 1;
+
+		if (show_demo_window)
+		{
+			ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiCond_FirstUseEver); // Normally user code doesn't need/want to call this because positions are saved in .ini file anyway. Here we just want to make the demo initial state a bit more friendly!
+			ImGui::ShowDemoWindow(&show_demo_window);
+		}
+
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::Text("hello world");
 
 		update(&app);
 
@@ -134,6 +186,8 @@ int main(int argc, char* argv[])
 		{
 			graphics.gameDrawPtr(&engine);
 		}
+
+		ImGui::Render();
 
 		SDL_GL_SwapWindow(window);
 	}
