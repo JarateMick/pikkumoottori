@@ -71,11 +71,12 @@ struct Controller
 {
 	enum CameraKeys
 	{
-		w, a, s, d
+		w, a, s, d, ctrl, q, e,
+		size,
 	};
 
 	bool jump;
-	bool cameraMovement[4];
+	bool cameraMovement[size];
 };
 
 struct EngineContext
@@ -83,6 +84,7 @@ struct EngineContext
 	float dt;
 	Controller controller;
 	GraphicsContext context;
+	void* imguiContext;
 
 	Vec2 windowDims;
 };

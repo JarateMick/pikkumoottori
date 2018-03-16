@@ -10,6 +10,8 @@
 #include "../Imgui/imgui.h"
 #include "../Imgui/imgui_impl_sdl_gl3.cpp"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "3rdparty/stb_image.h"
 
 static SpriteBatch spriteBatch;
 static Camera2D camera;
@@ -64,11 +66,9 @@ void initSpriteBatch(SpriteBatch* sb)
 	}
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sb->buffers[INDEX]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, MAX_SPRITES * sizeof(GLuint) * 6, indices, GL_STATIC_DRAW);
+	free(indices); // you should use gl_map_buffer for this
 
 	glBindVertexArray(0);
-
-	// glCheckError();
-	// Init shader textures here
 
 	sb->shader.compileShaderFromFile(
 		"assets/shaders/spriteVert.txt",
@@ -286,10 +286,100 @@ static Texture2D loadTexture(int width, int height, int bytesPerPixel, const uns
 
 static Texture2D testTexture()
 {
-	unsigned char pixels[3] =  {
+	unsigned char pixels[3] = {
 		255, 0, 255,
 	};
 	return loadTexture(1, 1, 3, pixels, false, false);
+}
+
+//enum TextureEnum
+//{
+//	Texture_infantry,
+//	Texture_circle,
+//	Texture_box,
+//	Texture_count,
+//};
+
+//constexpr const char* texturePathBase = "assets/textures/";
+//#define TEXTURES \
+//(const char* const[Texture_count]) { \
+//	[Texture_infantry] = "infantry.png", \
+//	[Texture_circle]   = "circle.png", \
+//	[Texture_box]      = "box", \
+// }
+
+
+#define TEXTURE_ENUM(DO) \
+	DO(infantry) \
+	DO(circle)\
+	DO(box)\
+	DO(awesomeface)\
+	DO(noise)\
+	DO(count)
+
+#define MAKE_ENUM(VAR) Texture_##VAR,
+enum TextureEnum {
+	TEXTURE_ENUM(MAKE_ENUM)
+};
+
+#define MAKE_STRINGS(VAR) #VAR,
+const char* const TextureEnumToStr[] = {
+	TEXTURE_ENUM(MAKE_STRINGS)
+};
+
+#define MAKE_MACRO_ENUM(VAR) #VAR,
+
+#define NAMES  \
+(const char*[]) { \
+	TEXTURE_ENUM(MAKE_MACRO_ENUM) \
+}
+
+
+#undef TEXTURE_ENUM
+#undef MAKE_STRINGS
+#undef MAKE_ENUM
+
+
+const char* baseTexturePath = "assets/textures/";
+
+static Texture2D loadTexture(TextureEnum texture)
+{
+	const char* path = TextureEnumToStr[texture];
+	char buffer[256];
+	ASSERT(strlen(baseTexturePath) + strlen(path) < 256);
+	strcpy(buffer, baseTexturePath);
+	strcat(buffer, path);
+	strcat(buffer, ".png");
+
+	int w, h, nrChannels;
+	unsigned char* data = stbi_load(buffer, &w, &h, &nrChannels, 0);
+	if (data)
+	{
+		return loadTexture(w, h, nrChannels, data);
+		stbi_image_free(data);
+	}
+	else
+	{
+		LOGI("failed to load image %s \n", buffer);
+		ASSERT(false);
+		return testTexture();
+	}
+}
+
+// can you implement sorter XD
+// shame that it 'leaks' and can't handle hotreloading textures XD
+static Texture2D* getTexture(TextureEnum texture)
+{
+	static Texture2D textureCache[Texture_count] = { 0 };
+	static bool loaded[Texture_count] = { 0 };
+
+	if (!loaded[texture])
+	{
+		textureCache[texture] = loadTexture(texture);
+		loaded[texture] = true;
+	}
+
+	return &textureCache[texture];
 }
 
 void initCamera(Camera2D* cam, int screenW, int screenH);
@@ -317,7 +407,11 @@ EXPORT INIT_GAME(initGame)
 		//ImGui::StyleColorsClassic();
 		initCamera(&camera, (int)engine->windowDims.x, (int)engine->windowDims.y);
 
+		stbi_set_flip_vertically_on_load(false);
+
 		engine->context.initted = true;
+
+		ImGui::SetCurrentContext((ImGuiContext*)engine->imguiContext);
 	}
 }
 
@@ -336,28 +430,28 @@ void updateCamera(Camera2D* cam, CameraState* state, Vec2* screen)
 {
 	if (state->needUpdate)
 	{
-			glm::vec3 translate(-state->position.x + screen->x / 2, -state->position.y + screen->y / 2, 0.0f);  //centeroi cameran myösä
-			cam->cameraMatrix = glm::translate(cam->orthoMatrix, translate);
+		glm::vec3 translate(-state->position.x + screen->x / 2, -state->position.y + screen->y / 2, 0.0f);  //centeroi cameran myösä
+		cam->cameraMatrix = glm::translate(cam->orthoMatrix, translate);
 
-			//glm::mat4 matRoll = glm::mat4(1.0f);
-			//glm::mat4 matPitch = glm::mat4(1.0f);
-			//glm::mat4 matYaw = glm::mat4(1.0f);
+		//glm::mat4 matRoll = glm::mat4(1.0f);
+		//glm::mat4 matPitch = glm::mat4(1.0f);
+		//glm::mat4 matYaw = glm::mat4(1.0f);
 
-			//matRoll  = glm::rotate(matRoll, angle, glm::vec3(0.f, 0.f, 1.0f));
-			//matPitch = glm::rotate(matPitch, pitch, glm::vec3(1.0f, 0.0f, 0.0f));
-			//matYaw   = glm::rotate(matYaw, yaw, glm::vec3(0.0f, 1.0f, 0.0f));
+		//matRoll  = glm::rotate(matRoll, angle, glm::vec3(0.f, 0.f, 1.0f));
+		//matPitch = glm::rotate(matPitch, pitch, glm::vec3(1.0f, 0.0f, 0.0f));
+		//matYaw   = glm::rotate(matYaw, yaw, glm::vec3(0.0f, 1.0f, 0.0f));
 
-			// glm::mat4 rotate = matRoll * matPitch * matYaw;
+		// glm::mat4 rotate = matRoll * matPitch * matYaw;
 
-			// kun yksi niin normaali eli kerrotaan yhdellä | jos 0.5 zoomattu ulos ja 2.o niiin zoom in
-			glm::vec3 scale(state->scale, state->scale, 0.0f);
-			cam->cameraMatrix = /* rotate * */ glm::scale(glm::mat4(1.0f), scale) * cam->cameraMatrix;
-			//camera scale^^
-			state->needUpdate = false;
+		// kun yksi niin normaali eli kerrotaan yhdellä | jos 0.5 zoomattu ulos ja 2.o niiin zoom in
+		glm::vec3 scale(state->scale, state->scale, 0.0f);
+		cam->cameraMatrix = /* rotate * */ glm::scale(glm::mat4(1.0f), scale) * cam->cameraMatrix;
+		//camera scale^^
+		state->needUpdate = false;
 	}
 }
 
-constexpr int BENCH_COUNT = 400000;
+constexpr int BENCH_COUNT = 300000;
 struct Entitys
 {
 	Vec2 pos[BENCH_COUNT];
@@ -367,6 +461,8 @@ struct Entitys
 	vec4 uvs[BENCH_COUNT];
 	vec4 colors[BENCH_COUNT];
 	unsigned int count;
+
+	vec4 bounds{};
 };
 
 EXPORT DRAW_GAME(drawGame)
@@ -379,9 +475,18 @@ EXPORT DRAW_GAME(drawGame)
 
 	glClear(GL_COLOR_BUFFER_BIT);
 
+
 	static bool init = false;
 	static Entitys* test = 0;
-	static Texture2D texture2d = testTexture();
+	static Texture2D* testTextures[] = {
+		getTexture(Texture_infantry),
+		getTexture(Texture_box),
+		getTexture(Texture_circle),
+		// getTexture(Texture_noise),
+		getTexture(Texture_awesomeface),
+	};
+
+
 	if (!init)
 	{
 		test = new Entitys;
@@ -397,20 +502,27 @@ EXPORT DRAW_GAME(drawGame)
 
 		for (int i = 0; i < count; ++i)
 		{
-			test->size[i] = { 2.f, 2.f };
+			test->size[i] = { 14.f, 14.f };
 			test->uvs[i] = { 0.f, 0.f, 1.f, 1.f };
 			test->colors[i] = { 1.f, 1.f, 1.f, 1.f };
 		}
 
 		for (int i = 0; i < count; ++i)
 		{
-			test->textureId[i] = texture2d.ID;//load
+			int r = rand() % ArrayCount(testTextures);
+			test->textureId[i] = testTextures[r]->ID;
+			if (r == Texture_box || r == Texture_circle)
+			{
+				vec4 randomColor{ (rand() % 255) / 255.f , (rand() % 255) / 255.f, (rand() % 255) / 255.f };
+				randomColor.h = rand() % 120 / 255.f + 0.2f;
+				test->colors[i] = randomColor;
+			}
 		}
 
 		for (int i = 0; i < count; ++i)
 		{
-			test->vel[i].x = (rand() % 1000) / 1000.f;
-			test->vel[i].y = (rand() % 1000) / 1000.f;
+			test->vel[i].x = (rand() % 100) / 100.f;
+			test->vel[i].y = (rand() % 100) / 100.f;
 		}
 
 		c->sprites.colors = test->colors;
@@ -419,11 +531,23 @@ EXPORT DRAW_GAME(drawGame)
 		c->sprites.sizes = test->size;
 		c->sprites.uvs = test->uvs;
 		c->sprites.count = count;
+
+		test->bounds.x = 0.f;
+		test->bounds.y = 0.f;
+		test->bounds.w = engine->windowDims.x;
+		test->bounds.h = engine->windowDims.y;
 	}
-	
+
+	ImGui::DragFloat2("bounds x, y", (&test->bounds.x));
+	ImGui::DragFloat2("bounds w, h", (&test->bounds.w));
+
 	Vec2 vel = {};
-	float speed = 2.f;
+	float speed = 40.f * engine->dt;
 	auto* controller = &engine->controller;
+	if (controller->cameraMovement[Controller::ctrl])
+	{
+		speed *= 5.f;
+	}
 	if (controller->cameraMovement[Controller::w])
 	{
 		vel.y += speed;
@@ -440,26 +564,36 @@ EXPORT DRAW_GAME(drawGame)
 	{
 		vel.x -= speed;
 	}
+	if (controller->cameraMovement[Controller::q])
+	{
+		zoom(&c->camera, 0.33f * engine->dt);
+	}
+	if (controller->cameraMovement[Controller::e])
+	{
+		zoom(&c->camera, -0.33f * engine->dt);
+	}
 	translate(&c->camera, vel);
 
+	float unitSpeed = 100 * engine->dt;
 	for (int i = 0; i < BENCH_COUNT; ++i)
 	{
-		test->pos[i].x += test->vel[i].x;
-		test->pos[i].y += test->vel[i].y;
+		test->pos[i].x += test->vel[i].x * unitSpeed;
+		test->pos[i].y += test->vel[i].y * unitSpeed;
 	}
 
 	for (int i = 0; i < BENCH_COUNT; ++i)
 	{
-		if (test->pos[i].x < 0 | test->pos[i].x > engine->windowDims.x)
+		if (test->pos[i].x < test->bounds.x | test->pos[i].x > test->bounds.w)
 		{
-			test->vel[i].x = -test->vel[i].x;
-			test->pos[i].x += test->vel[i].x;
+			test->vel[i].x = -test->vel[i].x; // *unitSpeed;
+//			test->pos[i].x += test->vel[i].x * unitSpeed;
+			test->pos[i].x = test->pos[i].x < test->bounds.x ? test->bounds.x : test->bounds.w - 1.f;
 		}
 
-		if (test->pos[i].y < 0 | test->pos[i].y > engine->windowDims.y)
+		if (test->pos[i].y < test->bounds.y | test->pos[i].y > test->bounds.h)
 		{
-			test->vel[i].y = -test->vel[i].y;
-			test->pos[i].y += test->vel[i].y;
+			test->vel[i].y = -test->vel[i].y; // *unitSpeed;
+			test->pos[i].y = test->pos[i].y < test->bounds.y ? test->bounds.y : test->bounds.h - 1.f;
 		}
 	}
 

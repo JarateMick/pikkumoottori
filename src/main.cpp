@@ -107,6 +107,11 @@ int main(int argc, char* argv[])
 	engine.windowDims.x = width;
 	engine.windowDims.y = height;
 
+	ImGui_ImplSdlGL3_Init(window);
+	bool show_demo_window = true;
+
+	engine.imguiContext = (void*)ImGui::GetCurrentContext();
+
 	if (app.gameInitPtr)
 	{
 		app.gameInitPtr(&engine);
@@ -117,11 +122,12 @@ int main(int argc, char* argv[])
 		graphics.gameInitPtr(&engine);
 	}
 
-	ImGui_ImplSdlGL3_Init(window);
-	bool show_demo_window = true;
 
+	float dt = 0.f;
 	while (!quit)
 	{
+		auto timePoint1(std::chrono::high_resolution_clock::now());
+
 		SDL_Event e;
 		while (SDL_PollEvent(&e))
 		{
@@ -148,6 +154,12 @@ int main(int argc, char* argv[])
 					engine.controller.cameraMovement[2] = down; break;
 				case SDL_SCANCODE_D:
 					engine.controller.cameraMovement[3] = down; break;
+				case SDL_SCANCODE_LCTRL:
+					engine.controller.cameraMovement[4] = down; break;
+				case SDL_SCANCODE_Q:
+					engine.controller.cameraMovement[5] = down; break;
+				case SDL_SCANCODE_E:
+					engine.controller.cameraMovement[6] = down; break;
 				default: 
 					break;
 				}
@@ -171,6 +183,7 @@ int main(int argc, char* argv[])
 		ImGui::Text("hello world");
 
 		update(&app);
+		update(&graphics);
 
 		if (app.gameUpdatePtr)
 		{
@@ -190,6 +203,13 @@ int main(int argc, char* argv[])
 		ImGui::Render();
 
 		SDL_GL_SwapWindow(window);
+
+		auto timePoint2(std::chrono::high_resolution_clock::now());
+		auto elapsedTime(timePoint2 - timePoint1);
+		float ft = { std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).count() };
+		dt = ft;
+		float ftSeconds = (ft / 1000.f);
+		engine.dt = ftSeconds;
 	}
 
 	return 0;
