@@ -5,7 +5,7 @@ SET me=%~n0:
 
 echo %me% Build starting
 
-set CFLAGS= /MP4 -Zi -nologo -EHs -GR- -fp:fast -wd4311 -wd4312 /P main.cpp
+set CFLAGS= /MP4 -Zi -nologo -EHs -GR- -fp:fast -wd4311 -wd4312 
 
 set LFLAGS= -incremental:no   
 set LFLAGS=%LFLAGS%  -LIBPATH:"../deps/lib" -incremental:no -opt:ref 
@@ -16,10 +16,11 @@ set LIBS= SDL2.lib SDL2main.lib
 
 set MAIN="..\src\main.cpp"
 
-
-
 if not exist build mkdir build
 pushd build
+
+:: CL /P /C ..\src\application\game.cpp %includes%
+:: PRETTY NEAT!!!
 
 set DEBUG=debug
 :: set argCount=0

@@ -9,7 +9,7 @@ set LFLAGS= -incremental:no opengl32.lib
 set LIBS=  SDL2.lib SDL2main.lib 
 set ADDITIONAL= /I"../deps/include" /I"../inc" /I"../deps"
 
-set MAIN="..\src\main.cpp"
+set MAIN="..\src\application\graphics.cpp"
 set LIBPATH="/LIBPATH:\"../deps/lib\""
 
 if not exist build mkdir build

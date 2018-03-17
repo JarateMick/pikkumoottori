@@ -1,6 +1,9 @@
 #pragma once
 
-#include <chrono>
+// #include <chrono>
+
+#include <cmath>
+#include <stdio.h>
 #include "../platform.h"
 
 EXPORT INIT_GAME(initGame);

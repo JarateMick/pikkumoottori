@@ -39,6 +39,7 @@
 #define ASSERT(expr) 
 #endif
 
+#ifdef _CHRONO_
 #define NAME(ending) (func_timing##ending)
 
 #define START_TIMING() \
@@ -56,6 +57,7 @@
 	auto NAME(4)(std::chrono::high_resolution_clock::now());	\
 	auto elapsedTime2(NAME(4) - NAME(3));						\
 	printf("Time: %f\n", std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime2).count()  );
+#endif
 
 #define introspect() 
 #define ignore
