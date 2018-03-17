@@ -4,6 +4,7 @@ attribute vec4 vPosition;
 attribute vec2 vTexCoord;
 attribute float texId;
 attribute vec4 color;
+attribute float rotation;
 
 varying vec2 texCoord;
 varying float textureId;
@@ -15,9 +16,35 @@ uniform mat4 position;
 // varying vec4 color;
 // uniform sampler2D textures[8];
 
+// 0 1 2 2 3 0;
+
+// 0: x,   y+h 
+// 1: x,   y
+// 2: x+w, y
+// 3: x+w, y+h
+
 void main()
 {
-	gl_Position.xy = (position * vPosition).xy;
+	// vec2 size = vPosition.zw;
+	// mat2 rot;
+	// rot[0].xy = vec2( cos(rotation), -sin(rotation));
+	// rot[1].xy = vec2( sin(rotation), cos(rotation));
+	
+
+//	vec2 rotated = vec2(cos(vRotation) * (gl_PointCoord.x - mid) + sin(vRotation) * (gl_PointCoord.y - mid) + mid,
+//       cos(vRotation) * (gl_PointCoord.y - mid) - sin(vRotation) * (gl_PointCoord.x - mid) + mid);
+
+	vec4 realPosition;
+	realPosition.x = vPosition.z * cos(rotation) - vPosition.w * sin(rotation);
+	realPosition.y = vPosition.z * sin(rotation) + vPosition.w * cos(rotation);
+	// realPosition.xy += vPosition.zw;
+	realPosition.xy += vPosition.xy;
+	
+//	realPosition.xy = vPosition.zw;
+	
+	gl_Position.xy = (position * vec4(realPosition.xy, 0, 1)).xy;
+	
+	// position* 
 	gl_Position.z = 0.0;
 	gl_Position.w = 1.0;
 	texCoord  = vTexCoord;

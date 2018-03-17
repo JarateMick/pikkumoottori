@@ -21,7 +21,7 @@ del *.pdb > NUL 2> NUL
 echo "WAITING FOR PDB ..." > lock.tmp
 REM cl %CFLAGS% %ADDITIONAL% ..\src\game\game.cpp /MD -LD %LIBS% /link game_common.lib -LIBPATH:"../deps/lib" -incremental:no -opt:ref -PDB:game_%random%.pdb /LIBPATH:"../deps/lib" 
 :: 
-cl  -Ox -Oi -Ob2 -Ot %CFLAGS% %ADDITIONAL% ..\src\graphics\graphics.cpp /MD -LD %LIBS% /link game_commondebug.lib -LIBPATH:"../deps/lib" -incremental:no -opt:ref -PDB:graphics_%random%.pdb /LIBPATH:"../deps/lib" 
+cl -Ox -Oi -Ob2 -Ot %CFLAGS% %ADDITIONAL% ..\src\graphics\graphics.cpp /MD -LD %LIBS% /link game_commondebug.lib -LIBPATH:"../deps/lib" -incremental:no -opt:ref -PDB:graphics_%random%.pdb /LIBPATH:"../deps/lib" 
 del lock.tmp
 
 

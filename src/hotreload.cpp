@@ -1,25 +1,23 @@
 
-struct ApplicationFunctions
-{
-	init_game*   gameInitPtr;
-	update_Game* gameUpdatePtr;
-	draw_Game*   gameDrawPtr;
-	void*        handle;
-	time_t       lastWriteTime;
-	
-	char   name[64];
-};
+
 
 static bool loadGameDll(ApplicationFunctions* app, const char* dllName);
-void initializeApplication(ApplicationFunctions* app, const char* name)
+void initializeApplication(ApplicationFunctions* app, const char* name, 
+	const char* initF, const char* updateF, const char* drawF)
 {
+	strcpy(app->initName, initF);
+	strcpy(app->updateName, updateF);
+	strcpy(app->drawName, drawF);
+
 	char appName[64];
 	sprintf(appName, "%s.dll", name);
+
 	loadGameDll(app, appName);
 	
 	ASSERT(strlen(name) + 4 < ArrayCount(ApplicationFunctions::name));
 	char* pos = strcpy(app->name, name);
 	strcpy(pos + strlen(name), ".dll");
+
 }
 
 void copyFileOs(const char* infile, const char* outfile)
@@ -111,7 +109,7 @@ static bool loadGameDll(ApplicationFunctions* app, const char* dllName)
 				LOGI("dynamic library load success! \n");
 
 
-				update_Game* gameUpdate = (update_Game*)SDL_LoadFunction(handle, "updateGame");
+				update_Game* gameUpdate = (update_Game*)SDL_LoadFunction(handle, app->updateName);
 
 				if (gameUpdate)
 				{
@@ -123,7 +121,7 @@ static bool loadGameDll(ApplicationFunctions* app, const char* dllName)
 					LOGI("counld not load game update!\n");
 				}
 
-				draw_Game*   gameDraw = (draw_Game*)SDL_LoadFunction(handle, "drawGame");
+				draw_Game*   gameDraw = (draw_Game*)SDL_LoadFunction(handle, app->drawName);
 				if (gameDraw)
 				{
 					app->gameDrawPtr = gameDraw;
@@ -133,7 +131,7 @@ static bool loadGameDll(ApplicationFunctions* app, const char* dllName)
 					LOGI("counld not load game draw!\n");
 				}
 
-				init_game*   gameInit = (init_game*)SDL_LoadFunction(handle, "initGame");
+				init_game*   gameInit = (init_game*)SDL_LoadFunction(handle, app->initName);
 				if (gameInit)
 				{
 					app->gameInitPtr = gameInit;

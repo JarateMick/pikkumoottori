@@ -5,12 +5,13 @@
 #include "graphicsF.h"
 #include "shader.cpp"
 
-constexpr int MAX_SPRITES = 500001;
+constexpr int MAX_SPRITES = 300001;
 struct VertexData
 {
-	float pos[MAX_SPRITES * 12];
+	float pos[MAX_SPRITES * 16];
 	float uvs[MAX_SPRITES * 8];
 	float ids[MAX_SPRITES * 4];
+	float rot[MAX_SPRITES * 4];
 	unsigned int colors[MAX_SPRITES * 4];
 	int textureSlots[32];
 	unsigned int slotCount;
@@ -20,7 +21,7 @@ struct VertexData
 struct SpriteBatch
 {
 	unsigned int VAO;
-	unsigned int buffers[5];
+	unsigned int buffers[6];
 	engine::Shader shader;
 	VertexData vertexData;
 };
@@ -31,9 +32,9 @@ struct Camera2D
 	glm::mat4 orthoMatrix;
 };
 
-EXPORT INIT_GAME(gameInit);
-EXPORT UPDATE_GAME(gameUpdate);
-EXPORT DRAW_GAME(gameDraw);
+EXPORT INIT_GAME(initGraphics);
+EXPORT UPDATE_GAME(updateGraphics);
+EXPORT DRAW_GAME(drawGraphics);
 
 
 #define _DEBUG 0

@@ -512,7 +512,6 @@ EXPORT INIT_GAME(initGraphics)
 
 		//ImGui::StyleColorsClassic();
 		initCamera(&camera, (int)engine->windowDims.x, (int)engine->windowDims.y);
-		engine->context.camera.scale = 1.f;
 
 		stbi_set_flip_vertically_on_load(false);
 
@@ -560,7 +559,7 @@ void updateCamera(Camera2D* cam, CameraState* state, Vec2* screen)
 	}
 }
 
-constexpr int BENCH_COUNT = 200000;
+constexpr int BENCH_COUNT = 300000 / 2;
 struct Entitys
 {
 	Vec2 pos[BENCH_COUNT];
@@ -616,15 +615,12 @@ EXPORT DRAW_GAME(drawGraphics)
 			test->colors[i] = { 1.f, 1.f, 1.f, 1.f };
 			test->rotation[i] = i / 10.f;
 		}
-		
-		int a = getTexture(Texture_box)->ID;
-		int b = getTexture(Texture_circle)->ID;
+
 		for (int i = 0; i < count; ++i)
 		{
 			int r = rand() % ArrayCount(testTextures);
 			test->textureId[i] = testTextures[r]->ID;
-
-			if (test->textureId[i] == a || test->textureId[i] == b)
+			if (r == Texture_box || r == Texture_circle)
 			{
 				vec4 randomColor{ (rand() % 255) / 255.f , (rand() % 255) / 255.f, (rand() % 255) / 255.f };
 				randomColor.h = rand() % 120 / 255.f + 0.2f;
@@ -737,7 +733,7 @@ EXPORT DRAW_GAME(drawGraphics)
 	// test->pos[1].x += 0.0001f;
 	test->rotation[1] += 0.001f;
 
-//	LOGI("camera %f %f %f \n", c->camera.position.x, c->camera.position.y, c->camera.scale);
+	LOGI("camera %f %f %f", c->camera.position.x, c->camera.position.y, c->camera.scale);
 
 	prepareBatch(&c->sprites, &spriteBatch);
 

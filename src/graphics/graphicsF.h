@@ -14,6 +14,7 @@ struct Sprites
 	vec4* uvs;
 	vec4* colors;
 	int* ids;
+	float* rotation;
 
 	unsigned int count;
 	// rotation jne
@@ -34,7 +35,8 @@ void zoom(CameraState* camera, float factor)
 	camera->scale += factor;
 	camera->needUpdate = true;
 	if (camera->scale < 0.01f)
-		camera->scale = 0.f;
+		camera->scale = 0.02f;
+
 }
 
 void translate(CameraState* camera, const Vec2& position)

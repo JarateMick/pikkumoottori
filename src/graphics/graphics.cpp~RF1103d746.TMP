@@ -560,7 +560,7 @@ void updateCamera(Camera2D* cam, CameraState* state, Vec2* screen)
 	}
 }
 
-constexpr int BENCH_COUNT = 200000;
+constexpr int BENCH_COUNT = 250000;
 struct Entitys
 {
 	Vec2 pos[BENCH_COUNT];

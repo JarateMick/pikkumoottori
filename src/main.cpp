@@ -1,30 +1,67 @@
 #define _CRT_SECURE_NO_WARNINGS 1
-#include <stdio.h>
-
-#include <SDL2/SDL.h>
 #define WIN32_LEAN_AND_MEAN 1
 #define VC_EXTRALEAN 1
 
+#include <stdio.h>
+#include <SDL2/SDL.h>
+
+#ifndef __EMSCRIPTEN__
 #include <windows.h>
 #include <sys/stat.h>
-#include <chrono>
+#else
+#include <math.h>
+#include <GLES3/gl3.h>
+#include <GLES3/gl2ext.h>
+#endif
 
+#include <chrono>
 #include "platform.h"
-#include "hotreload.cpp"
+
+struct ApplicationFunctions
+{
+	init_game*   gameInitPtr;
+	update_Game* gameUpdatePtr;
+	draw_Game*   gameDrawPtr;
+	void*        handle;
+	time_t       lastWriteTime;
+
+	char initName[64];
+	char updateName[64];
+	char drawName[64];
+
+	char   name[64];
+};
+
 
 // #include <glad/glad.h> #include "glad.c"
 
-#include "glad/glad.h"
-#include "glad.c"
 
+#ifndef __EMSCRIPTEN__
+#include "hotreload.cpp" // must be after appfuncs
 #include "Imgui/imgui.h"
 #include "Imgui/imgui_demo.cpp"
 #include "Imgui/imgui_impl_sdl_gl3.cpp"
+#include "glad/glad.h"
+#include "glad.c"
+#else
+#include <emscripten.h>
+#include <functional>
+
+#include "application/game.cpp"
+#include "graphics/graphics.cpp"
+
+std::function<void()> loop;
+static void main_loop() { loop(); }
+#endif
 
 
 
 
+#ifndef __EMSCRIPTEN__
 int main(int argc, char* argv[])
+#else
+extern "C" int mainf()
+#endif
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
 
@@ -85,32 +122,49 @@ int main(int argc, char* argv[])
 	SDL_GL_MakeCurrent(window, glContex);
 	SDL_GL_SetSwapInterval(0);
 
+
+
+#ifndef __EMSCRIPTEN__
 	if (!gladLoadGL())
 	{
 		printf("failed to initaliaze GLAD\n");
 		ASSERT(false);
 	}
-
-
-#ifndef __EMSCRIPTEN__
-
 #endif
+
 	bool quit = false;
 
 	ApplicationFunctions app = { };
-	initializeApplication(&app, "game");
+#ifndef __EMSCRIPTEN__
+	initializeApplication(&app, "game", "initGame", "updateGame", "drawGame");
+#endif
 
 	ApplicationFunctions graphics = { };
-	initializeApplication(&graphics, "graphics");
+#ifndef __EMSCRIPTEN__
+	initializeApplication(&graphics, "graphics", "initGraphics", "updateGraphics", "drawGraphics");
+#endif
+
+#ifdef __EMSCRIPTEN__
+	app.gameInitPtr = initGame;
+	app.gameUpdatePtr = updateGame;
+	app.gameDrawPtr = drawGame;
+
+	app.gameInitPtr = initGraphics;
+	app.gameUpdatePtr = updateGraphics;
+	app.gameDrawPtr = drawGraphics;
+#endif
+
 
 	EngineContext engine = { };
-	engine.windowDims.x = width;
-	engine.windowDims.y = height;
+	engine.windowDims.x = (float)width;
+	engine.windowDims.y = (float)height;
 
+#ifndef __EMSCRIPTEN__
 	ImGui_ImplSdlGL3_Init(window);
 	bool show_demo_window = true;
 
 	engine.imguiContext = (void*)ImGui::GetCurrentContext();
+#endif
 
 	if (app.gameInitPtr)
 	{
@@ -124,14 +178,19 @@ int main(int argc, char* argv[])
 
 
 	float dt = 0.f;
-	while (!quit)
-	{
+#ifndef __EMSCRIPTEN__
+	while (!quit) {
+#else
+	loop = [&] {
+#endif
 		auto timePoint1(std::chrono::high_resolution_clock::now());
 
 		SDL_Event e;
 		while (SDL_PollEvent(&e))
 		{
+#ifndef __EMSCRIPTEN__
 			ImGui_ImplSdlGL3_ProcessEvent(&e);
+#endif
 
 			switch (e.type)
 			{
@@ -143,7 +202,7 @@ int main(int argc, char* argv[])
 			case SDL_KEYUP:
 			{
 				bool down = e.key.state;
-				
+
 				switch (e.key.keysym.scancode)
 				{
 				case SDL_SCANCODE_W:
@@ -160,7 +219,7 @@ int main(int argc, char* argv[])
 					engine.controller.cameraMovement[5] = down; break;
 				case SDL_SCANCODE_E:
 					engine.controller.cameraMovement[6] = down; break;
-				default: 
+				default:
 					break;
 				}
 			}
@@ -168,6 +227,8 @@ int main(int argc, char* argv[])
 				break;
 			}
 		}
+
+#ifndef __EMSCRIPTEN__
 		ImGui_ImplSdlGL3_NewFrame(window);
 
 		if (ImGui::Button("Demo Window"))                       // Use buttons to toggle our bools. We could use Checkbox() as well.
@@ -184,6 +245,7 @@ int main(int argc, char* argv[])
 
 		update(&app);
 		update(&graphics);
+#endif
 
 		if (app.gameUpdatePtr)
 		{
@@ -200,7 +262,10 @@ int main(int argc, char* argv[])
 			graphics.gameDrawPtr(&engine);
 		}
 
+
+#ifndef __EMSCRIPTEN__
 		ImGui::Render();
+#endif
 
 		SDL_GL_SwapWindow(window);
 
@@ -210,7 +275,16 @@ int main(int argc, char* argv[])
 		dt = ft;
 		float ftSeconds = (ft / 1000.f);
 		engine.dt = ftSeconds;
-	}
+
+		LOGI("DT: %f \n", engine.dt);
+//		LOGI("STILL ALIVE\n");
+	};
+
+#if __EMSCRIPTEN__
+	emscripten_set_main_loop(main_loop, 0, true);
+#else
+	return 0;
+#endif
 
 	return 0;
 }
