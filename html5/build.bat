@@ -1,5 +1,5 @@
 @echo off
-
+SETLOCAL ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 set argCount=0
 
 set LFLAGS=
@@ -18,6 +18,7 @@ set OUTPUT= -o moottori.js
 
 set SRC=../src/main.cpp
 set DEBUG=release
+
 
 for %%x in (%*) do (
    set /A argCount+=1
