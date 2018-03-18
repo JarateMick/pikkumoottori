@@ -45,6 +45,15 @@ void translate(CameraState* camera, const Vec2& position)
 	camera->position += position;
 }
 
+Vec2 convertScreenToWorld(CameraState* camera, Vec2 screenCoords, Vec2* screenDims)
+{
+	screenCoords.y = screenDims->y - screenCoords.y;
+	screenCoords -= Vec2{ screenDims->x / 2, screenDims->y / 2 };
+	screenCoords /= camera->scale;
+	screenCoords += camera->position;
+	return screenCoords;
+}
+
 // camera front
 // sprite front
 // 

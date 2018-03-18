@@ -100,18 +100,50 @@ static inline Vec2 rotate(Vec2 pos, float angle)
 	return result;
 }
 
+static inline void* mapBuffer(unsigned int type, unsigned int buffer)
+{
+	// glBindBuffer(type, buffer);
+	// return glMapBuffer(type, GL_WRITE_ONLY);
+	return 0;
+}
+
+static inline void* mapBufferRange(unsigned int type, unsigned int buffer, uint32 size)
+{
+	glBindBuffer(type, buffer);
+	return glMapBufferRange(type, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+}
+
+
+#define NO_COPY 1
+#define NO_MEMCPY 0
+constexpr uint32 POS_SIZE = sizeof(float) * 4 * 4 * MAX_SPRITES;
+constexpr uint32 UV_SIZE  = sizeof(float) * 4 * 2 * MAX_SPRITES;
+constexpr uint32 ID_SIZE  = sizeof(float) * 4 * 1 * MAX_SPRITES;
+constexpr uint32 COLOR_SIZE = sizeof(uint32) * 4 * 1 * MAX_SPRITES;
+constexpr uint32 ROT_SIZE = sizeof(float) * 4 * 1 * MAX_SPRITES;
+
 void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 {
+	START_TIMING2();
+
 	int count = sprites->count;
 	VertexData* vertexData = &sb->vertexData;
 	vertexData->indicesCount = 6 * sprites->count;
 
 	{
-		float* positions = vertexData->pos;
 		Vec2* __restrict pos = sprites->positions;
 		Vec2* __restrict size = sprites->sizes;
 
 		float* __restrict angle = sprites->rotation;
+
+#if NO_COPY
+		float* positions = (float*)mapBufferRange(GL_ARRAY_BUFFER, sb->buffers[POS], POS_SIZE);
+		//mapBuffer(GL_ARRAY_BUFFER, sb->buffers[POS]);
+
+
+#else
+		float* positions = vertexData->pos;
+#endif
 
 		for (int i = 0; i < count * 16; i += 16)
 		{
@@ -168,6 +200,8 @@ void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 			*(positions + i + 13) = pos->y + size->y;
 			*(positions + i + 11) = 0.0f;
 #else
+
+#if NO_MEMCPY
 			Vec2 half = *size / 2.f;
 			*(positions + i + 0) = pos->x;
 			*(positions + i + 1) = pos->y; // +size->y;
@@ -188,15 +222,47 @@ void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 			*(positions + i + 13) = pos->y; // +size->y;
 			*(positions + i + 14) = half.x;
 			*(positions + i + 15) = half.y;
+#else
+			Vec2 half = *size / 2.f;
+
+			memcpy(positions + i + 0, pos, sizeof(float) * 2);
+			*(positions + i + 2) = -half.x;
+			*(positions + i + 3) = half.y;
+
+			memcpy(positions + i + 4, pos, sizeof(float) * 2);
+			*(positions + i + 6) = -half.x;
+			*(positions + i + 7) = -half.y;
+
+			memcpy(positions + i + 8, pos, sizeof(float) * 2);
+			*(positions + i + 10) = half.x;
+			*(positions + i + 11) = -half.y;
+
+			memcpy(positions + i + 12, pos, sizeof(float) * 2);
+			//memcpy(positions + i + 14, &half, sizeof(float) * 2);
+			*(positions + i + 14) = half.x;
+			*(positions + i + 15) = half.y;
+#endif
+
 #endif
 			++pos;
 			++size;
 		}
+
+#if NO_COPY
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+#endif
 	}
 
 	{
 		vec4* __restrict uvs = sprites->uvs;
+
+#if NO_COPY
+		// float* uvsOut = (float*)mapBuffer(GL_ARRAY_BUFFER, sb->buffers[UVS]);
+		float* uvsOut = (float*)mapBufferRange(GL_ARRAY_BUFFER, sb->buffers[UVS], UV_SIZE);
+#else
 		float* __restrict uvsOut = vertexData->uvs;
+#endif
+
 
 		for (int i = 0; i < count * 8; i += 8)
 		{
@@ -214,11 +280,21 @@ void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 
 			++uvs;
 		}
+
+#if NO_COPY
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+#endif
 	}
 
 	{
 		vec4* __restrict color = sprites->colors;
+#if NO_COPY
+		// unsigned int* colorOut = (unsigned int*)mapBuffer(GL_ARRAY_BUFFER, sb->buffers[COLOR]);
+		unsigned int* colorOut = (unsigned int*)mapBufferRange(GL_ARRAY_BUFFER, sb->buffers[COLOR], COLOR_SIZE);
+#else
 		unsigned int* colorOut = vertexData->colors;
+#endif
+
 
 		for (int i = 0; i < count * 4; i += 4)
 		{
@@ -229,34 +305,64 @@ void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 
 			unsigned int c = (a << 24 | b << 16 | g << 8 | r);
 
+#if NO_MEMCPY
 			*(colorOut + i + 0) = c;
 			*(colorOut + i + 1) = c;
 			*(colorOut + i + 2) = c;
 			*(colorOut + i + 3) = c;
+#else
+			memcpy(colorOut + i + 0, &c, sizeof(float));
+			memcpy(colorOut + i + 1, &c, sizeof(float));
+			memcpy(colorOut + i + 2, &c, sizeof(float));
+			memcpy(colorOut + i + 3, &c, sizeof(float));
+#endif
 
 			++color;
 		}
+
+#if NO_COPY
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+#endif
 	}
 
 	{
-		float* rot = vertexData->rot;
 		float* s_rots = sprites->rotation;
+
+#if NO_COPY
+		// float* rot = (float*)mapBuffer(GL_ARRAY_BUFFER, sb->buffers[ROTATION]);
+		float* rot = (float*)mapBufferRange(GL_ARRAY_BUFFER, sb->buffers[ROTATION], ROT_SIZE);
+#else
+		float* rot = vertexData->rot;
+#endif
 
 		for (int i = 0; i < count * 4; i += 4)
 		{
+#if NO_MEMCPY
 			*(rot + i + 0) = *s_rots;
 			*(rot + i + 1) = *s_rots;
 			*(rot + i + 2) = *s_rots;
 			*(rot + i + 3) = *s_rots;
+#else
+			memcpy(rot + i + 0, s_rots, sizeof(float));
+			memcpy(rot + i + 1, s_rots, sizeof(float));
+			memcpy(rot + i + 2, s_rots, sizeof(float));
+			memcpy(rot + i + 3, s_rots, sizeof(float));
+#endif
 			++s_rots;
 			// memcpy(rot + i, s_rots, 4 * sizeof(float));
 		}
+#if NO_COPY
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+#endif
 	}
 
 
 	{
-		float* __restrict idsOut = vertexData->ids;
+		// float* __restrict idsOut = vertexData->ids;
 		int* __restrict ids = sprites->ids;
+
+		// float* idsOut = (float*)mapBuffer(GL_ARRAY_BUFFER, sb->buffers[ID]);
+		float* idsOut = (float*)mapBufferRange(GL_ARRAY_BUFFER, sb->buffers[ID], ID_SIZE);
 
 		for (int i = 0; i < ArrayCount(VertexData::textureSlots); ++i)
 		{
@@ -287,20 +393,33 @@ void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 				ts = (float)(vertexData->slotCount);
 			}
 
+#if NO_MEMCPY
 			*(idsOut + i + 0) = ts;
 			*(idsOut + i + 1) = ts;
 			*(idsOut + i + 2) = ts;
 			*(idsOut + i + 3) = ts;
+#else
+			memcpy(idsOut + i + 0, &ts, sizeof(float));
+			memcpy(idsOut + i + 1, &ts, sizeof(float));
+			memcpy(idsOut + i + 2, &ts, sizeof(float));
+			memcpy(idsOut + i + 3, &ts, sizeof(float));
+#endif
 
 			++ids;
 		}
+#if NO_COPY
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+#endif
 	}
+
+	END_TIMING2();
 }
 
 void renderBatch(Sprites* sprites, SpriteBatch* sb, glm::mat4* cam)
 {
 	int count = sprites->count;
 	VertexData* vertexData = &sb->vertexData;
+#if !NO_COPY
 	glBindBuffer(GL_ARRAY_BUFFER, sb->buffers[POS]);
 	glBufferData(GL_ARRAY_BUFFER, count * sizeof(float) * 4 * 4, vertexData->pos, GL_DYNAMIC_DRAW);
 
@@ -315,6 +434,7 @@ void renderBatch(Sprites* sprites, SpriteBatch* sb, glm::mat4* cam)
 
 	glBindBuffer(GL_ARRAY_BUFFER, sb->buffers[ROTATION]);
 	glBufferData(GL_ARRAY_BUFFER, count * sizeof(float) * 4, vertexData->rot, GL_DYNAMIC_DRAW);
+#endif
 	glCheckError();
 
 	sb->shader.use();
@@ -560,15 +680,39 @@ EXPORT UPDATE_GAME(updateGraphics)
 {
 	auto* c = &engine->context;
 
+	if (engine->controller.mouseDown)
+	{
+		Vec2 pos = engine->controller.mousePos;
+		float halfX = 40.f;
+		float halfY = 40.f;
+
+		pos = convertScreenToWorld(&engine->context.camera, pos, &engine->windowDims);
+
+		vec4 bounds = { pos.x - halfX, pos.y - halfY, pos.x + halfX, pos.y + halfY };
+		GraphicsState* state = (GraphicsState*)mem->memory;
+		Entitys* ents = &state->ents;
+
+		for (int i = 0; i < BENCH_COUNT; ++i)
+		{
+			if (ents->pos[i].x > bounds.x && ents->pos[i].x < bounds.w &&
+				ents->pos[i].y > bounds.y && ents->pos[i].y < bounds.h)
+			{
+				ents->colors[i] = { 0.f, 0.f, 0.f, 1.0f };
+			}
+		}
+	}
+
 	if (engine->reloadGraphics)
 	{
 		engine->reloadGraphics = false;
 
+#ifndef __EMSCRIPTEN__
 		if (!gladLoadGL())
 		{
 			printf("failed to initaliaze GLAD\n");
 			ASSERT(false);
 		}	
+#endif
 		
 		glViewport(0, 0, engine->windowDims.x, engine->windowDims.y);
 		glEnable(GL_BLEND);

@@ -39,9 +39,10 @@
 #define ASSERT(expr) 
 #endif
 
-#ifdef _CHRONO_
+#if  defined(_CHRONO_) || defined(__EMSCRIPTEN__)
 #define NAME(ending) (func_timing##ending)
 
+#ifndef __EMSCRIPTEN__
 #define START_TIMING() \
 	auto NAME(1)(std::chrono::high_resolution_clock::now()); \
 
@@ -57,6 +58,11 @@
 	auto NAME(4)(std::chrono::high_resolution_clock::now());	\
 	auto elapsedTime2(NAME(4) - NAME(3));						\
 	printf("Time: %f\n", std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime2).count()  );
+#else
+#define START_TIMING2()
+#define END_TIMING2()
+
+#endif
 #endif
 
 #define introspect() 
@@ -85,6 +91,9 @@ struct Controller
 
 	bool jump;
 	bool cameraMovement[size];
+
+	bool mouseDown;
+	Vec2 mousePos;
 };
 
 struct EngineContext

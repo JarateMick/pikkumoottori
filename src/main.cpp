@@ -5,10 +5,12 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 
+
 #ifndef __EMSCRIPTEN__
 #include <windows.h>
 #include <sys/stat.h>
 #else
+#include <cstdlib>
 #include <math.h>
 #include <GLES3/gl3.h>
 #include <GLES3/gl2ext.h>
@@ -213,6 +215,19 @@ extern "C" int mainf()
 			{
 				quit = true;
 			} break;
+			case SDL_MOUSEMOTION:
+			{
+				engine.controller.mousePos.x = e.motion.x;
+				engine.controller.mousePos.y = e.motion.y;
+			} break;
+			case SDL_MOUSEBUTTONDOWN:
+			{
+				engine.controller.mouseDown = true;
+			} break;
+			case SDL_MOUSEBUTTONUP:
+			{
+				engine.controller.mouseDown = false;
+			} break;
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
 			{
@@ -299,7 +314,7 @@ extern "C" int mainf()
 		float ftSeconds = (ft / 1000.f);
 		engine.dt = ftSeconds;
 
-		LOGI("DT: %f \n", engine.dt);
+//		LOGI("DT: %f \n", engine.dt);
 //		LOGI("STILL ALIVE\n");
 	};
 

@@ -5,7 +5,7 @@
 #include "graphicsF.h"
 #include "shader.cpp"
 
-constexpr int MAX_SPRITES = 300001;
+constexpr int MAX_SPRITES = 500000;
 struct VertexData
 {
 	float pos[MAX_SPRITES * 16];
@@ -68,7 +68,7 @@ const char* const TextureEnumToStr[] = {
 #undef MAKE_ENU
 
 
-constexpr int BENCH_COUNT = 200000;
+constexpr int BENCH_COUNT = 500000;
 struct Entitys
 {
 	Vec2 pos[BENCH_COUNT];
