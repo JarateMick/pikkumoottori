@@ -25,12 +25,25 @@ struct ApplicationFunctions
 	void*        handle;
 	time_t       lastWriteTime;
 
+	Memory memory;
+
 	char initName[64];
 	char updateName[64];
 	char drawName[64];
-
 	char   name[64];
 };
+
+void initMemory(ApplicationFunctions* app, uint64 size)
+{
+	app->memory.isInitialized = false;
+	app->memory.size = size;
+
+	void* mem = malloc(size);
+	if (mem)
+		app->memory.memory = mem;
+	else
+		ASSERT(false);
+}
 
 
 // #include <glad/glad.h> #include "glad.c"
@@ -143,6 +156,8 @@ extern "C" int mainf()
 #ifndef __EMSCRIPTEN__
 	initializeApplication(&graphics, "graphics", "initGraphics", "updateGraphics", "drawGraphics");
 #endif
+	initMemory(&app, Megabytes(128));
+	initMemory(&graphics, Megabytes(128));
 
 #ifdef __EMSCRIPTEN__
 	app.gameInitPtr = initGame;
@@ -168,12 +183,12 @@ extern "C" int mainf()
 
 	if (app.gameInitPtr)
 	{
-		app.gameInitPtr(&engine);
+		app.gameInitPtr(&engine, &app.memory);
 	}
 
 	if (graphics.gameDrawPtr)
 	{
-		graphics.gameInitPtr(&engine);
+		graphics.gameInitPtr(&engine, &graphics.memory);
 	}
 
 
@@ -244,22 +259,30 @@ extern "C" int mainf()
 		ImGui::Text("hello world");
 
 		update(&app);
-		update(&graphics);
+
+		if (update(&graphics))
+			engine.reloadGraphics = true;
+
 #endif
 
 		if (app.gameUpdatePtr)
 		{
-			app.gameUpdatePtr(&engine);
-		}
-
-		if (app.gameDrawPtr)
-		{
-			app.gameDrawPtr(&engine);
+			app.gameUpdatePtr(&engine, &app.memory);
 		}
 
 		if (graphics.gameUpdatePtr)
 		{
-			graphics.gameDrawPtr(&engine);
+			graphics.gameUpdatePtr(&engine, &graphics.memory);
+		}
+
+		if (app.gameDrawPtr)
+		{
+			app.gameDrawPtr(&engine, &app.memory);
+		}
+
+		if (graphics.gameUpdatePtr)
+		{
+			graphics.gameDrawPtr(&engine, &graphics.memory);
 		}
 
 

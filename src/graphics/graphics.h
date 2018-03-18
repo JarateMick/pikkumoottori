@@ -32,6 +32,65 @@ struct Camera2D
 	glm::mat4 orthoMatrix;
 };
 
+struct Texture2D
+{
+	int width, height;
+	unsigned int ID;
+	uint64_t writeTime;
+};
+
+#define TEXTURE_ENUM(DO) \
+	DO(infantry) \
+	DO(circle)\
+	DO(box)\
+	DO(awesomeface)\
+	DO(noise)\
+	DO(count)
+
+#define MAKE_ENUM(VAR) Texture_##VAR,
+enum TextureEnum {
+	TEXTURE_ENUM(MAKE_ENUM)
+};
+
+#define MAKE_STRINGS(VAR) #VAR,
+const char* const TextureEnumToStr[] = {
+	TEXTURE_ENUM(MAKE_STRINGS)
+};
+
+#define MAKE_MACRO_ENUM(VAR) #VAR,
+
+#define NAMES  \
+(const char*[]) { \
+	TEXTURE_ENUM(MAKE_MACRO_ENUM) \
+}
+#undef TEXTURE_ENUM
+#undef MAKE_STRINGS
+#undef MAKE_ENU
+
+
+constexpr int BENCH_COUNT = 200000;
+struct Entitys
+{
+	Vec2 pos[BENCH_COUNT];
+	Vec2 size[BENCH_COUNT];
+	Vec2 vel[BENCH_COUNT];
+
+	TextureEnum textureNames[BENCH_COUNT];
+	int textureId[BENCH_COUNT];
+	vec4 uvs[BENCH_COUNT];
+	vec4 colors[BENCH_COUNT];
+	float rotation[BENCH_COUNT];
+	unsigned int count;
+
+	vec4 bounds{};
+};
+
+struct GraphicsState
+{
+	Entitys ents;
+	Texture2D* testTextures[3];
+};
+
 EXPORT INIT_GAME(initGraphics);
 EXPORT UPDATE_GAME(updateGraphics);
 EXPORT DRAW_GAME(drawGraphics);

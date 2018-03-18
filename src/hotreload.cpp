@@ -150,13 +150,15 @@ static bool loadGameDll(ApplicationFunctions* app, const char* dllName)
 		return false;
 }
 
-void update(ApplicationFunctions* app)
+bool update(ApplicationFunctions* app)
 {
 	size_t writeTime = getWriteTime(app->name);
 	if (writeTime != app->lastWriteTime)
 	{
 		unloadGameDll(app);
 		loadGameDll(app, app->name);
+		return true;
 	}
+	return false;
 }
 

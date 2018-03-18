@@ -144,7 +144,7 @@ void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 			*(positions + i + 10) = 0.0f;
 			// 11
 
-			*(positions + i + 12)  = pos->x + tr.x;
+			*(positions + i + 12) = pos->x + tr.x;
 			*(positions + i + 13) = pos->y + tr.y;
 			*(positions + i + 14) = 0.0f;
 			//  15
@@ -152,7 +152,7 @@ void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 			++angle;
 #elif 0
 
-			*(positions + i + 0) = pos->x;
+			* (positions + i + 0) = pos->x;
 			*(positions + i + 1) = pos->y + size->y;
 			*(positions + i + 2) = 0.0f;
 
@@ -248,7 +248,7 @@ void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 			*(rot + i + 1) = *s_rots;
 			*(rot + i + 2) = *s_rots;
 			*(rot + i + 3) = *s_rots;
-			 ++s_rots;
+			++s_rots;
 			// memcpy(rot + i, s_rots, 4 * sizeof(float));
 		}
 	}
@@ -336,13 +336,6 @@ void renderBatch(Sprites* sprites, SpriteBatch* sb, glm::mat4* cam)
 
 }
 
-struct Texture2D
-{
-	int width, height;
-	unsigned int ID;
-	uint64_t writeTime;
-};
-
 static bool IsPowerOfTwo(unsigned long x)
 {
 	return (x & (x - 1)) == 0;
@@ -413,35 +406,6 @@ static Texture2D testTexture()
 // }
 
 
-#define TEXTURE_ENUM(DO) \
-	DO(infantry) \
-	DO(circle)\
-	DO(box)\
-	DO(awesomeface)\
-	DO(noise)\
-	DO(count)
-
-#define MAKE_ENUM(VAR) Texture_##VAR,
-enum TextureEnum {
-	TEXTURE_ENUM(MAKE_ENUM)
-};
-
-#define MAKE_STRINGS(VAR) #VAR,
-const char* const TextureEnumToStr[] = {
-	TEXTURE_ENUM(MAKE_STRINGS)
-};
-
-#define MAKE_MACRO_ENUM(VAR) #VAR,
-
-#define NAMES  \
-(const char*[]) { \
-	TEXTURE_ENUM(MAKE_MACRO_ENUM) \
-}
-
-
-#undef TEXTURE_ENUM
-#undef MAKE_STRINGS
-#undef MAKE_ENUM
 
 
 const char* baseTexturePath = "assets/textures/";
@@ -521,6 +485,74 @@ EXPORT INIT_GAME(initGraphics)
 #ifndef __EMSCRIPTEN__
 		ImGui::SetCurrentContext((ImGuiContext*)engine->imguiContext);
 #endif
+
+		{
+			GraphicsState* state = (GraphicsState*)mem->memory;
+			Entitys* test = &state->ents;
+
+			state->testTextures[0] = getTexture(Texture_box);
+			state->testTextures[1] = getTexture(Texture_circle);
+			state->testTextures[2] = getTexture(Texture_awesomeface);
+
+			TextureEnum names[3] = { Texture_box, Texture_circle, Texture_awesomeface };
+
+			int count = ArrayCount(Entitys::pos);
+			const int RNG_MAX = 0xFFFFFFFF;
+			for (int i = 0; i < count; ++i)
+			{
+				test->pos[i].x = rand() % (int)engine->windowDims.x;
+				test->pos[i].y = rand() % (int)engine->windowDims.y;
+			}
+
+			for (int i = 0; i < count; ++i)
+			{
+				test->size[i] = { 14.f, 14.f };
+				test->uvs[i] = { 0.f, 0.f, 1.f, 1.f };
+				test->colors[i] = { 1.f, 1.f, 1.f, 1.f };
+				test->rotation[i] = i / 10.f;
+			}
+
+			int a = getTexture(Texture_box)->ID;
+			int b = getTexture(Texture_circle)->ID;
+
+
+			for (int i = 0; i < count; ++i)
+			{
+				int r = rand() % ArrayCount(GraphicsState::testTextures);
+				test->textureId[i] = state->testTextures[r]->ID;
+				test->textureNames[i] = names[r];
+
+				if (test->textureId[i] == a || test->textureId[i] == b)
+				{
+					vec4 randomColor{ (rand() % 255) / 255.f , (rand() % 255) / 255.f, (rand() % 255) / 255.f };
+					randomColor.h = rand() % 120 / 255.f + 0.2f;
+					test->colors[i] = randomColor;
+				}
+			}
+
+			for (int i = 0; i < count; ++i)
+			{
+				test->vel[i].x = (rand() % 100) / 100.f;
+				test->vel[i].y = (rand() % 100) / 100.f;
+			}
+
+			// c->sprites.
+
+			c->sprites.colors = test->colors;
+			c->sprites.ids = test->textureId;
+			c->sprites.positions = test->pos;
+			c->sprites.sizes = test->size;
+			c->sprites.uvs = test->uvs;
+			c->sprites.rotation = test->rotation;
+			c->sprites.count = count;
+
+			test->bounds.x = 0.f;
+			test->bounds.y = 0.f;
+			test->bounds.w = engine->windowDims.x;
+			test->bounds.h = engine->windowDims.y;
+
+
+		}
 	}
 }
 
@@ -528,6 +560,38 @@ EXPORT UPDATE_GAME(updateGraphics)
 {
 	auto* c = &engine->context;
 
+	if (engine->reloadGraphics)
+	{
+		engine->reloadGraphics = false;
+
+		if (!gladLoadGL())
+		{
+			printf("failed to initaliaze GLAD\n");
+			ASSERT(false);
+		}	
+		
+		glViewport(0, 0, engine->windowDims.x, engine->windowDims.y);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glClearColor(114.f / 255.0f, 144.f / 255.0f, 154.f / 255.0f, 1.0f);
+
+		ImGui::SetCurrentContext((ImGuiContext*)engine->imguiContext);
+
+		initSpriteBatch(&spriteBatch);
+
+		GraphicsState* state = (GraphicsState*)mem->memory;
+		state->testTextures[0] = getTexture(Texture_box);
+		state->testTextures[1] = getTexture(Texture_circle);
+		state->testTextures[2] = getTexture(Texture_awesomeface);
+
+		Entitys* ents = &state->ents;
+		for (int i = 0; i < BENCH_COUNT; ++i)
+		{
+			ents->textureId[i] = getTexture(ents->textureNames[i])->ID;
+		}
+
+		initCamera(&camera, engine->windowDims.x, engine->windowDims.y);
+	}
 }
 
 void initCamera(Camera2D* cam, int screenW, int screenH)
@@ -560,24 +624,11 @@ void updateCamera(Camera2D* cam, CameraState* state, Vec2* screen)
 	}
 }
 
-constexpr int BENCH_COUNT = 200000;
-struct Entitys
-{
-	Vec2 pos[BENCH_COUNT];
-	Vec2 size[BENCH_COUNT];
-	Vec2 vel[BENCH_COUNT];
-	int textureId[BENCH_COUNT];
-	vec4 uvs[BENCH_COUNT];
-	vec4 colors[BENCH_COUNT];
-	float rotation[BENCH_COUNT];
-	unsigned int count;
-
-	vec4 bounds{};
-};
 
 EXPORT DRAW_GAME(drawGraphics)
 {
 	auto* c = &engine->context;
+	GraphicsState* state = (GraphicsState*)mem->memory;
 	if (c->updateViewPort)
 	{
 		glViewport(0, 0, engine->windowDims.x, engine->windowDims.y);
@@ -585,79 +636,6 @@ EXPORT DRAW_GAME(drawGraphics)
 
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	static bool init = false;
-	static Entitys* test = 0;
-	static Texture2D* testTextures[] = {
-		// getTexture(Texture_infantry),
-		getTexture(Texture_box),
-		getTexture(Texture_circle),
-		// getTexture(Texture_noise),
-		getTexture(Texture_awesomeface),
-	};
-
-
-	if (!init)
-	{
-		test = new Entitys;
-		init = true;
-
-		int count = ArrayCount(Entitys::pos);
-		const int RNG_MAX = 0xFFFFFFFF;
-		for (int i = 0; i < count; ++i)
-		{
-			test->pos[i].x = rand() % (int)engine->windowDims.x;
-			test->pos[i].y = rand() % (int)engine->windowDims.y;
-		}
-
-		for (int i = 0; i < count; ++i)
-		{
-			test->size[i] = { 14.f, 14.f };
-			test->uvs[i] = { 0.f, 0.f, 1.f, 1.f };
-			test->colors[i] = { 1.f, 1.f, 1.f, 1.f };
-			test->rotation[i] = i / 10.f;
-		}
-		
-		int a = getTexture(Texture_box)->ID;
-		int b = getTexture(Texture_circle)->ID;
-		for (int i = 0; i < count; ++i)
-		{
-			int r = rand() % ArrayCount(testTextures);
-			test->textureId[i] = testTextures[r]->ID;
-
-			if (test->textureId[i] == a || test->textureId[i] == b)
-			{
-				vec4 randomColor{ (rand() % 255) / 255.f , (rand() % 255) / 255.f, (rand() % 255) / 255.f };
-				randomColor.h = rand() % 120 / 255.f + 0.2f;
-				test->colors[i] = randomColor;
-			}
-		}
-
-		for (int i = 0; i < count; ++i)
-		{
-			test->vel[i].x = (rand() % 100) / 100.f;
-			test->vel[i].y = (rand() % 100) / 100.f;
-		}
-
-		// c->sprites.
-
-		c->sprites.colors = test->colors;
-		c->sprites.ids = test->textureId;
-		c->sprites.positions = test->pos;
-		c->sprites.sizes = test->size;
-		c->sprites.uvs = test->uvs;
-		c->sprites.rotation = test->rotation;
-		c->sprites.count = count;
-
-		test->bounds.x = 0.f;
-		test->bounds.y = 0.f;
-		test->bounds.w = engine->windowDims.x;
-		test->bounds.h = engine->windowDims.y;
-	}
-
-#ifndef __EMSCRIPTEN__
-	ImGui::DragFloat2("bounds x, y", (&test->bounds.x));
-	ImGui::DragFloat2("bounds w, h", (&test->bounds.w));
-#endif
 
 	Vec2 vel = {};
 	float speed = 40.f * engine->dt;
@@ -692,6 +670,12 @@ EXPORT DRAW_GAME(drawGraphics)
 	}
 	translate(&c->camera, vel);
 
+	Entitys* test = &state->ents;
+#ifndef __EMSCRIPTEN__
+	ImGui::DragFloat2("bounds x, y", (&test->bounds.x));
+	ImGui::DragFloat2("bounds w, h", (&test->bounds.w));
+#endif
+
 	float unitSpeed = 100 * engine->dt;
 	for (int i = 0; i < BENCH_COUNT; ++i)
 	{
@@ -703,14 +687,13 @@ EXPORT DRAW_GAME(drawGraphics)
 	{
 		if (test->pos[i].x < test->bounds.x | test->pos[i].x > test->bounds.w)
 		{
-			test->vel[i].x = -test->vel[i].x; // *unitSpeed;
-//			test->pos[i].x += test->vel[i].x * unitSpeed;
+			test->vel[i].x = -test->vel[i].x;
 			test->pos[i].x = test->pos[i].x < test->bounds.x ? test->bounds.x : test->bounds.w - 1.f;
 		}
 
 		if (test->pos[i].y < test->bounds.y | test->pos[i].y > test->bounds.h)
 		{
-			test->vel[i].y = -test->vel[i].y; // *unitSpeed;
+			test->vel[i].y = -test->vel[i].y;
 			test->pos[i].y = test->pos[i].y < test->bounds.y ? test->bounds.y : test->bounds.h - 1.f;
 		}
 	}
@@ -723,21 +706,6 @@ EXPORT DRAW_GAME(drawGraphics)
 	{
 		test->rotation[i] -= test->vel[i].x;
 	}
-
-	
-	test->textureId[0] = testTextures[0]->ID;
-	test->pos[0].x = 0.f;
-	test->pos[0].y = 0.f;
-	// test->pos[0].x += 0.0001f;
-	test->rotation[0] += 0.001f;
-
-	test->textureId[1] = testTextures[0]->ID;
-	test->pos[1].x = 10.f;
-	test->pos[1].y = 10.f;
-	// test->pos[1].x += 0.0001f;
-	test->rotation[1] += 0.001f;
-
-//	LOGI("camera %f %f %f \n", c->camera.position.x, c->camera.position.y, c->camera.scale);
 
 	prepareBatch(&c->sprites, &spriteBatch);
 

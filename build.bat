@@ -38,7 +38,8 @@ for %%x in (%*) do (
 	)
 	
 	if /I "%%x"=="env" (
-		call "H:\Visual Studio\VC\vcvarsall.bat" x64
+		:: call "H:\Visual Studio\VC\vcvarsall.bat" x64
+		call "%VS140COMNTOOLS%\..\..\VC\vcvarsall.bat" x64
 	)
   
 	if /I "%%x"=="gr" (

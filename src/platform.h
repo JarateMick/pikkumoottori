@@ -67,6 +67,12 @@
 #undef ignore
 #undef introspect
 
+#include <stdint.h>
+typedef uint8_t  uint8;
+typedef uint32_t uint32;
+typedef uint64_t uint64;
+
+
 #include "graphics/graphicsF.h"
 
 struct Controller
@@ -88,15 +94,23 @@ struct EngineContext
 	GraphicsContext context;
 	void* imguiContext;
 
+	bool reloadGraphics;
 	Vec2 windowDims;
 };
 
-#define INIT_GAME(name) void name(EngineContext* engine)
+struct Memory
+{
+	bool isInitialized;
+	void* memory;
+	uint64 size;
+};
+
+#define INIT_GAME(name) void name(EngineContext* engine, Memory* mem)
 typedef INIT_GAME(init_game);
 
-#define UPDATE_GAME(name) void name(EngineContext* engine)
+#define UPDATE_GAME(name) void name(EngineContext* engine, Memory* mem)
 typedef UPDATE_GAME(update_Game);
 
-#define DRAW_GAME(name) void name(EngineContext* engine)
+#define DRAW_GAME(name) void name(EngineContext* engine, Memory* mem)
 typedef DRAW_GAME(draw_Game);
 
