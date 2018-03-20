@@ -96,28 +96,29 @@ static void makeSprite(Sprites* s, Vec2 pos, Vec2 size, int textureID)
 	s->count += 1;
 }
 
+// bottom left is origo
 static void makeWall(Sprites* s, Vec2 pos, Vec2 size, int id)
 {
-	pos -= size / 2.f;
+	pos += size / 2.f;
 	makeSprite(s, pos, size, id);
 }
 
 static void initWalls(GameState* state, Sprites* s, int startIndex)
 {
-
 	auto texture = getTexture(Texture_box);
+
 	// bottom
-
 	makeWall(s, { 0.f, 0.f },   { 10.f, 100.f, }, texture->ID);
-	makeWall(s, { 100.f, 0.f }, { 10.f, 100.f, }, texture->ID);
-
+	// right
+	makeWall(s, { 100.f - 10.f, 0.f }, { 10.f, 100.f, }, texture->ID);
+	// top
+	makeWall(s, { 0.f, 100.f - 10.f }, { 100.f, 10.f, }, texture->ID);
+	// left
+	makeWall(s, { 0.f, 0.f },   { 100.f, 10.f, }, texture->ID);
+	
 	// makeWall(s, { 0.f, 0.f },   { 100.f, 10.f, }, texture->ID);
 	// makeWall(s, { 0.f, 100.f }, { 100.f, 10.f, }, texture->ID);
-
-	makeWall(s, { 100.f, 100.f }, { 100.f, 10.f, }, texture->ID);
-	makeWall(s, { 100.f, 0.f }, { 100.f, 10.f, }, texture->ID);
 }
-
 
 EXPORT UPDATE_GAME(updateGame)
 {

@@ -301,6 +301,8 @@ extern "C" int mainf()
 			graphics.gameDrawPtr(&engine, &graphics.memory);
 		}
 
+		Vec2 mousePos = convertScreenToWorld(&engine.context.camera, engine.controller.mousePos, &engine.windowDims);
+		ImGui::Text("Mouse (%f %f)", mousePos.x, mousePos.y);
 
 #ifndef __EMSCRIPTEN__
 		ImGui::Render();
