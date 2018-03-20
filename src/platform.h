@@ -1,6 +1,9 @@
 #pragma once
 #define ASSERTION_ENABLED 1
 
+#define true 1
+#define false 0
+
 #define Kilobytes(Value) ((Value)*1024LL)
 #define Megabytes(Value) (Kilobytes(Value)*1024LL)
 #define Gigabytes(Value) (Megabytes(Value)*1024LL)
@@ -13,7 +16,7 @@
 #define  LOGE(...)  printf(__VA_ARGS__)	
 
 #ifdef _WIN32
-#define EXPORT extern "C" __declspec(dllexport)
+#define EXPORT __declspec(dllexport)
 #else
 #define EXPORT extern "C" 
 #endif
@@ -39,6 +42,7 @@
 #define ASSERT(expr) 
 #endif
 
+#if 0
 #if  defined(_CHRONO_) || defined(__EMSCRIPTEN__)
 #define NAME(ending) (func_timing##ending)
 
@@ -64,6 +68,12 @@
 
 #endif
 #endif
+#endif
+
+typedef struct
+{
+	float v[16];
+} mat4;
 
 #define introspect() 
 #define ignore
@@ -74,45 +84,60 @@
 #undef introspect
 
 #include <stdint.h>
-typedef uint8_t  uint8;
+typedef int8_t int8;
+typedef int16_t int16;
+typedef int32_t int32;
+typedef int64_t int64;
+typedef int32 bool32;
+
+typedef uint8_t uint8;
+typedef uint16_t uint16;
 typedef uint32_t uint32;
 typedef uint64_t uint64;
+
+typedef intptr_t intptr;
+typedef uintptr_t uintptr;
+
+typedef float real32;
+typedef double real64;
 
 
 #include "graphics/graphicsF.h"
 
-struct Controller
+enum CameraKeys
 {
-	enum CameraKeys
-	{
-		w, a, s, d, ctrl, q, e,
-		size,
-	};
-
-	bool jump;
-	bool cameraMovement[size];
-
-	bool mouseDown;
-	Vec2 mousePos;
+	w, a, s, d, ctrl, q, e,
+	size,
 };
 
-struct EngineContext
+typedef struct
+{
+
+
+	bool32 jump;
+	bool32 cameraMovement[size];
+
+	bool32 mouseDown;
+	Vec2 mousePos;
+} Controller;
+
+typedef struct
 {
 	float dt;
 	Controller controller;
 	GraphicsContext context;
 	void* imguiContext;
 
-	bool reloadGraphics;
+	bool32 reloadGraphics;
 	Vec2 windowDims;
-};
+} EngineContext;
 
-struct Memory
+typedef struct
 {
-	bool isInitialized;
+	bool32 isInitialized;
 	void* memory;
 	uint64 size;
-};
+} Memory;
 
 #define INIT_GAME(name) void name(EngineContext* engine, Memory* mem)
 typedef INIT_GAME(init_game);

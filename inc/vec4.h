@@ -1,9 +1,9 @@
 #pragma once 
 
-introspect() struct vec4
+typedef struct 
 {
     float x;
     float y;
     float w;
     float h;
-};
+} vec4;

@@ -2,37 +2,71 @@
 
 // vector 2 
 
-introspect() struct Vec2
+
+typedef struct
 {
-float x;
-float y;
+	float x;
+	float y;
 
-ignore Vec2& operator+=(const Vec2& rhs);
-ignore Vec2& operator-=(const Vec2& rhs);
-ignore friend Vec2 operator+(Vec2 lhs, const Vec2& rhs);
-ignore friend Vec2 operator-(Vec2 lhs, const Vec2& rhs);
+//ignore Vec2& operator+=(const Vec2& rhs);
+//ignore Vec2& operator-=(const Vec2& rhs);
+//ignore friend Vec2 operator+(Vec2 lhs, const Vec2& rhs);
+//ignore friend Vec2 operator-(Vec2 lhs, const Vec2& rhs);
+//
+//// ignore Vec2 operator+=(const float rhs);
+//
+//ignore Vec2& operator*=(const float s);
+//ignore Vec2& operator*=(const int s);
+//ignore Vec2& operator/=(const float s);
+//ignore Vec2& operator/=(const int s);
+//
+//ignore Vec2 operator*(const float s);
+//ignore Vec2 operator*(const int s);
+//
+//ignore Vec2 operator/(const float s);
+//ignore Vec2 operator/(const int s);
+//
+//ignore float length();
+//
+//ignore void normalizeInPlace();
+//ignore void safeNormalizeInPlace();
+//ignore Vec2 normalize();
+} Vec2;
+typedef Vec2 vec2;
 
-// ignore Vec2 operator+=(const float rhs);
+static inline Vec2 vec2_subv(Vec2* a, Vec2* b)
+{
+	Vec2 result;
+	result.x = a->x - b->x;
+	result.y = a->y - b->y;
+	return result;
+}
 
-ignore Vec2& operator*=(const float s);
-ignore Vec2& operator*=(const int s);
-ignore Vec2& operator/=(const float s);
-ignore Vec2& operator/=(const int s);
+static inline Vec2 vec2_div(Vec2* a, float s)
+{
+	Vec2 result;
+	result.x = a->x /= s;
+	result.y = a->y /= s;
+	return result;
+}
 
-ignore Vec2 operator*(const float s);
-ignore Vec2 operator*(const int s);
+static inline Vec2 vec2_add(Vec2* a, float s)
+{
+	Vec2 result;
+	result.x = a->x + s;
+	result.y = a->y + s;
+	return result;
+}
 
-ignore Vec2 operator/(const float s);
-ignore Vec2 operator/(const int s);
+static inline Vec2 vec2_addv(Vec2* a, Vec2* b)
+{
+	Vec2 result;
+	result.x = a->x + b->x;
+	result.y = a->y + b->y;
+	return result;
+}
 
-ignore float length();
-
-ignore void normalizeInPlace();
-ignore void safeNormalizeInPlace();
-ignore Vec2 normalize();
-};
-
-
+#if 0
 static Vec2 rotateVec(Vec2* vec, float theta)
 {
 float cs = cos(theta);
@@ -155,3 +189,4 @@ float Vec2::length()
 	return sqrt(x * x + y * y);
 }
 
+#endif

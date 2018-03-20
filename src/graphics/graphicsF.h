@@ -9,9 +9,9 @@
 	DO(count)
 
 #define MAKE_ENUM(VAR) Texture_##VAR,
-enum TextureEnum {
+typedef enum {
 	TEXTURE_ENUM(MAKE_ENUM)
-};
+} TextureEnum ;
 
 #define MAKE_STRINGS(VAR) #VAR,
 const char* const TextureEnumToStr[] = {
@@ -31,14 +31,14 @@ const char* const TextureEnumToStr[] = {
 #undef MAKE_MACRO_ENUM
 
 
-struct CameraState
+typedef struct 
 {
 	Vec2  position;
 	float scale;
-	bool needUpdate;
-};
+	bool32 needUpdate;
+} CameraState;
 
-struct Sprites
+typedef struct 
 {
 	Vec2* positions;
 	Vec2* sizes;
@@ -49,31 +49,31 @@ struct Sprites
 
 	unsigned int count;
 	// rotation jne
-};
+} Sprites;
 
-struct Texture2D
+typedef struct 
 {
 	int width, height;
 	unsigned int ID;
 	uint64_t writeTime;
-};
+} Texture2D;
 
-struct GraphicsFuncs
+typedef struct 
 {
 	Texture2D* (*getTexture)(TextureEnum texture);
-};
+} GraphicsFuncs;
 
 /// hahaa
-struct GraphicsContext
+typedef struct 
 {
-	bool initted;
-	bool updateViewPort;
+	bool32 initted;
+	bool32 updateViewPort;
 	CameraState camera;
 	Sprites sprites;
 	void* window;
 
 	GraphicsFuncs funcs;
-};
+} GraphicsContext;
 
 void zoom(CameraState* camera, float factor)
 {
@@ -84,18 +84,19 @@ void zoom(CameraState* camera, float factor)
 
 }
 
-void translate(CameraState* camera, const Vec2& position)
+void translate(CameraState* camera, Vec2* position)
 {
 	camera->needUpdate = true;
-	camera->position += position;
+	vec2_addv(&camera->position, position);
 }
 
 Vec2 convertScreenToWorld(CameraState* camera, Vec2 screenCoords, Vec2* screenDims)
 {
 	screenCoords.y = screenDims->y - screenCoords.y;
-	screenCoords -= Vec2{ screenDims->x / 2, screenDims->y / 2 };
-	screenCoords /= camera->scale;
-	screenCoords += camera->position;
+	Vec2 dimsHalf = { screenDims->x / 2, screenDims->y / 2 };
+	vec2_subv(&screenCoords, &dimsHalf);
+	vec2_div(&screenCoords, camera->scale);
+	vec2_addv(&screenCoords, &camera->position);
 	return screenCoords;
 }
 

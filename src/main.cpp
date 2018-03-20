@@ -218,8 +218,8 @@ extern "C" int mainf()
 			} break;
 			case SDL_MOUSEMOTION:
 			{
-				engine.controller.mousePos.x = e.motion.x;
-				engine.controller.mousePos.y = e.motion.y;
+				engine.controller.mousePos.x = (float)e.motion.x;
+				engine.controller.mousePos.y = (float)e.motion.y;
 			} break;
 			case SDL_MOUSEBUTTONDOWN:
 			{

@@ -1,12 +1,11 @@
 #pragma once
 
-#include <chrono>
 #include "../platform.h"
 #include "graphicsF.h"
-#include "shader.cpp"
+#include "shader.c"
 
-constexpr int MAX_SPRITES = 500000;
-struct VertexData
+#define MAX_SPRITES 500000
+typedef struct 
 {
 	float pos[MAX_SPRITES * 16];
 	float uvs[MAX_SPRITES * 8];
@@ -16,26 +15,29 @@ struct VertexData
 	int textureSlots[32];
 	unsigned int slotCount;
 	unsigned int indicesCount;
-};
+} VertexData;
 
-struct SpriteBatch
+typedef struct 
 {
 	unsigned int VAO;
 	unsigned int buffers[6];
-	engine::Shader shader;
+	Shader shader;
 	VertexData vertexData;
-};
+} SpriteBatch;
 
-struct Camera2D
+
+typedef struct 
 {
-	glm::mat4 cameraMatrix;
-	glm::mat4 orthoMatrix;
-};
+	mat4 cameraMatrix;
+	mat4 orthoMatrix;
+	// glm::mat4 cameraMatrix;
+	// glm::mat4 orthoMatrix;
+} Camera2D;
 
-struct GraphicsState
+typedef struct 
 {
 
-};
+} GraphicsState;
 
 
 EXPORT INIT_GAME(initGraphics);
@@ -55,7 +57,7 @@ GLenum glCheckError__(const char *file, int line)
 	GLenum errorCode;
 	while ((errorCode = glGetError()) != GL_NO_ERROR)
 	{
-		std::string error;
+		char* error = "no";
 		switch (errorCode)
 		{
 		case GL_INVALID_ENUM:                  error = "INVALID_ENUM"; break;
@@ -66,7 +68,7 @@ GLenum glCheckError__(const char *file, int line)
 		case GL_OUT_OF_MEMORY:                 error = "OUT_OF_MEMORY"; break;
 		case GL_INVALID_FRAMEBUFFER_OPERATION: error = "INVALID_FRAMEBUFFER_OPERATION"; break;
 		}
-		LOGI("%s | %s (%i)\n", error.c_str(), file, line);
+		LOGI("%s | %s (%i)\n", error, file, line);
 	}
 	return errorCode;
 }

@@ -1,28 +1,11 @@
 #pragma once 
 
-introspect() struct vec3
+typedef struct 
 {
-	float x;
-	float y; float z;
+	float x, y, z;
+} vec3;
 
-
-	ignore vec3& operator+=(const vec3& rhs);
-	ignore vec3& operator-=(const vec3& rhs);
-	ignore friend vec3 operator+(const vec3& lhs, const vec3& rhs);
-	ignore vec3 operator/(const float s);
-	ignore vec3 operator/(const int s);
-
-	ignore friend vec3 operator-(vec3 lhs, const vec3& rhs);
-
-
-	ignore float operator*(const vec3& rhs);
-
-	ignore vec3 operator*(const float s);
-	ignore vec3 operator*(const int s);
-	void normalizeInPlace();
-	vec3 normalize() const;
-};
-
+#if 0
 float vec3::operator*(const vec3& rhs)
 {
 	return x * rhs.x + y * rhs.y + z * rhs.z;
@@ -106,3 +89,4 @@ vec3 vec3::operator*(const int s)
 	return { x * s, y * s, z * s };
 }
 
+#endif

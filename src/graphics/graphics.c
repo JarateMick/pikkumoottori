@@ -6,11 +6,10 @@
 #include "../glad.c"
 #endif
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-#include "../Imgui/imgui.h"
-#include "../Imgui/imgui_impl_sdl_gl3.cpp"
+// #include <glm/glm.hpp>
+// #include <glm/gtc/matrix_transform.hpp>
+// #include "../Imgui/imgui.h"
+// #include "../Imgui/imgui_impl_sdl_gl3.cpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "3rdparty/stb_image.h"
@@ -18,18 +17,18 @@
 static SpriteBatch spriteBatch;
 static Camera2D camera;
 
-constexpr int POS = 0;
-constexpr int UVS = 1;
-constexpr int ID = 2;
-constexpr int COLOR = 3;
-constexpr int ROTATION = 4;
-constexpr int INDEX = 5;
-constexpr int MAX_TEXTURES = 8;
+#define POS 0
+#define UVS 1
+#define B_ID 2
+#define COLOR 3
+#define ROTATION 4
+#define INDEX 5
+#define MAX_TEXTURES 8
 
 void initSpriteBatch(SpriteBatch* sb)
 {
 	glGenVertexArrays(1, &sb->VAO);
-	glGenBuffers(ArrayCount(SpriteBatch::buffers), sb->buffers);
+	glGenBuffers(ArrayCount(sb->buffers), sb->buffers);
 
 	glBindVertexArray(sb->VAO);
 
@@ -47,7 +46,7 @@ void initSpriteBatch(SpriteBatch* sb)
 	glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, 0);
 	glBufferData(GL_ARRAY_BUFFER, MAX_SPRITES * sizeof(float) * 4 * 2, NULL, GL_DYNAMIC_DRAW);
 
-	glBindBuffer(GL_ARRAY_BUFFER, sb->buffers[ID]);
+	glBindBuffer(GL_ARRAY_BUFFER, sb->buffers[B_ID]);
 	glVertexAttribPointer(2, 1, GL_FLOAT, false, 0, 0);
 	glBufferData(GL_ARRAY_BUFFER, MAX_SPRITES * sizeof(float) * 4 * 1, NULL, GL_DYNAMIC_DRAW);
 
@@ -79,15 +78,14 @@ void initSpriteBatch(SpriteBatch* sb)
 
 	glBindVertexArray(0);
 
-	sb->shader.compileShaderFromFile(
-		"assets/shaders/spriteVert.txt",
-		"assets/shaders/spriteFrag.txt");
+
+	sb->shader = shader_compile_from_file("assets/shaders/spriteVert.txt", "assets/shaders/spriteFrag.txt");
 
 	glCheckError();
 
-	sb->shader.use();
-	int values[8]{ 0, 1, 2, 3, 4, 5, 6, 7 };
-	sb->shader.setInts("textures", 8, values);
+	shader_use(&sb->shader);
+	int values[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+	shader_set_ints(&sb->shader, "textures", 8, values);
 
 	glCheckError();
 }
@@ -116,15 +114,15 @@ static inline void* mapBufferRange(unsigned int type, unsigned int buffer, uint3
 
 #define NO_COPY 1
 #define NO_MEMCPY 0
-constexpr uint32 POS_SIZE = sizeof(float) * 4 * 4 * MAX_SPRITES;
-constexpr uint32 UV_SIZE  = sizeof(float) * 4 * 2 * MAX_SPRITES;
-constexpr uint32 ID_SIZE  = sizeof(float) * 4 * 1 * MAX_SPRITES;
-constexpr uint32 COLOR_SIZE = sizeof(uint32) * 4 * 1 * MAX_SPRITES;
-constexpr uint32 ROT_SIZE = sizeof(float) * 4 * 1 * MAX_SPRITES;
+#define POS_SIZE  sizeof(float) * 4 * 4 * MAX_SPRITES
+#define UV_SIZE   sizeof(float) * 4 * 2 * MAX_SPRITES
+#define ID_SIZE   sizeof(float) * 4 * 1 * MAX_SPRITES
+#define COLOR_SIZE  sizeof(uint32) * 4 * 1 * MAX_SPRITES
+#define ROT_SIZE  sizeof(float) * 4 * 1 * MAX_SPRITES
 
 void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 {
-	START_TIMING2();
+	// START_TIMING2();
 
 	int count = sprites->count;
 	VertexData* vertexData = &sb->vertexData;
@@ -223,7 +221,7 @@ void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 			*(positions + i + 14) = half.x;
 			*(positions + i + 15) = half.y;
 #else
-			Vec2 half = *size / 2.f;
+			Vec2 half = vec2_div(size, 2.f);
 
 			memcpy(positions + i + 0, pos, sizeof(float) * 2);
 			*(positions + i + 2) = -half.x;
@@ -298,10 +296,10 @@ void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 
 		for (int i = 0; i < count * 4; i += 4)
 		{
-			int r = int(color->x * 255.0f);
-			int g = int(color->y * 255.0f);
-			int b = int(color->w * 255.0f);
-			int a = int(color->h * 255.0f);
+			int r = (int)color->x * 255.0f;
+			int g = (int)color->y * 255.0f;
+			int b = (int)color->w * 255.0f;
+			int a = (int)color->h * 255.0f;
 
 			unsigned int c = (a << 24 | b << 16 | g << 8 | r);
 
@@ -361,10 +359,10 @@ void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 		// float* __restrict idsOut = vertexData->ids;
 		int* __restrict ids = sprites->ids;
 
-		// float* idsOut = (float*)mapBuffer(GL_ARRAY_BUFFER, sb->buffers[ID]);
-		float* idsOut = (float*)mapBufferRange(GL_ARRAY_BUFFER, sb->buffers[ID], ID_SIZE);
+		// float* idsOut = (float*)mapBuffer(GL_ARRAY_BUFFER, sb->buffers[B_ID]);
+		float* idsOut = (float*)mapBufferRange(GL_ARRAY_BUFFER, sb->buffers[B_ID], ID_SIZE);
 
-		for (int i = 0; i < ArrayCount(VertexData::textureSlots); ++i)
+		for (int i = 0; i < ArrayCount(vertexData->textureSlots); ++i)
 		{
 			vertexData->textureSlots[i] = -1;
 		}
@@ -375,7 +373,7 @@ void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 		{
 			// get texture id
 			float ts;
-			bool found = false;
+			bool32 found = false;
 			for (int i = 0; i < MAX_TEXTURES; i++)
 			{
 				if (vertexData->textureSlots[i] == *ids)
@@ -412,10 +410,10 @@ void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 #endif
 	}
 
-	END_TIMING2();
+	// END_TIMING2();
 }
 
-void renderBatch(Sprites* sprites, SpriteBatch* sb, glm::mat4* cam)
+void renderBatch(Sprites* sprites, SpriteBatch* sb, mat4* cam)
 {
 	int count = sprites->count;
 	VertexData* vertexData = &sb->vertexData;
@@ -426,7 +424,7 @@ void renderBatch(Sprites* sprites, SpriteBatch* sb, glm::mat4* cam)
 	glBindBuffer(GL_ARRAY_BUFFER, sb->buffers[UVS]);
 	glBufferData(GL_ARRAY_BUFFER, count * sizeof(float) * 2 * 4, vertexData->uvs, GL_DYNAMIC_DRAW);
 
-	glBindBuffer(GL_ARRAY_BUFFER, sb->buffers[ID]);
+	glBindBuffer(GL_ARRAY_BUFFER, sb->buffers[B_ID]);
 	glBufferData(GL_ARRAY_BUFFER, count * sizeof(float) * 4, vertexData->ids, GL_DYNAMIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, sb->buffers[COLOR]);
@@ -437,8 +435,9 @@ void renderBatch(Sprites* sprites, SpriteBatch* sb, glm::mat4* cam)
 #endif
 	glCheckError();
 
-	sb->shader.use();
-	sb->shader.setMat4("position", *cam);
+	shader_use(&sb->shader);
+	shader_set_mat4(&sb->shader, "position", cam);
+	// sb->shader.setMat4("position", *cam);
 
 	glBindVertexArray(sb->VAO);
 
@@ -456,13 +455,13 @@ void renderBatch(Sprites* sprites, SpriteBatch* sb, glm::mat4* cam)
 
 }
 
-static bool IsPowerOfTwo(unsigned long x)
+static bool32 IsPowerOfTwo(unsigned long x)
 {
 	return (x & (x - 1)) == 0;
 }
 
 static Texture2D loadTexture(int width, int height, int bytesPerPixel, const unsigned char* pixels,
-	bool clampToEdge = false, bool nearest = true)
+	bool32 clampToEdge, bool32 nearest)
 {
 	Texture2D value;
 
@@ -530,7 +529,7 @@ static Texture2D testTexture()
 
 const char* baseTexturePath = "assets/textures/";
 
-static Texture2D loadTexture(TextureEnum texture)
+static Texture2D loadTextureE(TextureEnum texture)
 {
 	const char* path = TextureEnumToStr[texture];
 	char buffer[256];
@@ -543,7 +542,7 @@ static Texture2D loadTexture(TextureEnum texture)
 	unsigned char* data = stbi_load(buffer, &w, &h, &nrChannels, 0);
 	if (data)
 	{
-		return loadTexture(w, h, nrChannels, data);
+		return loadTexture(w, h, nrChannels, data, true, true);
 		stbi_image_free(data);
 	}
 	else
@@ -559,11 +558,11 @@ static Texture2D loadTexture(TextureEnum texture)
 static Texture2D* getTexture(TextureEnum texture)
 {
 	static Texture2D textureCache[Texture_count] = { 0 };
-	static bool loaded[Texture_count] = { 0 };
+	static bool32 loaded[Texture_count] = { 0 };
 
 	if (!loaded[texture])
 	{
-		textureCache[texture] = loadTexture(texture);
+		textureCache[texture] = loadTextureE(texture);
 		loaded[texture] = true;
 	}
 
@@ -603,19 +602,19 @@ EXPORT INIT_GAME(initGraphics)
 		engine->context.initted = true;
 
 #ifndef __EMSCRIPTEN__
-		ImGui::SetCurrentContext((ImGuiContext*)engine->imguiContext);
+		// ImGui::SetCurrentContext((ImGuiContext*)engine->imguiContext);
 #endif
 
 		// Init functions
 
-		auto* funcs = &c->funcs;
+		GraphicsFuncs* funcs = &c->funcs;
 		funcs->getTexture = getTexture;
 	}
 }
 
 EXPORT UPDATE_GAME(updateGraphics)
 {
-	auto* c = &engine->context;
+	GraphicsContext* c = &engine->context;
 
 #if 0
 	if (engine->controller.mouseDown)
@@ -658,7 +657,7 @@ EXPORT UPDATE_GAME(updateGraphics)
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glClearColor(114.f / 255.0f, 144.f / 255.0f, 154.f / 255.0f, 1.0f);
 
-		ImGui::SetCurrentContext((ImGuiContext*)engine->imguiContext);
+		// ImGui::SetCurrentContext((ImGuiContext*)engine->imguiContext);
 
 		initSpriteBatch(&spriteBatch);
 
@@ -681,38 +680,31 @@ EXPORT UPDATE_GAME(updateGraphics)
 
 void initCamera(Camera2D* cam, int screenW, int screenH)
 {
-	cam->orthoMatrix = glm::ortho(0.0f, (float)screenW, 0.0f, (float)screenH);
+	memset(cam, 0, sizeof(*cam));
+	// cam->orthoMatrix = glm::ortho(0.0f, (float)screenW, 0.0f, (float)screenH);
 }
 
 void updateCamera(Camera2D* cam, CameraState* state, Vec2* screen)
 {
 	if (state->needUpdate)
 	{
+#if 0
 		glm::vec3 translate(-state->position.x + screen->x / 2, -state->position.y + screen->y / 2, 0.0f);  //centeroi cameran myösä
 		cam->cameraMatrix = glm::translate(cam->orthoMatrix, translate);
-
-		//glm::mat4 matRoll = glm::mat4(1.0f);
-		//glm::mat4 matPitch = glm::mat4(1.0f);
-		//glm::mat4 matYaw = glm::mat4(1.0f);
-
-		//matRoll  = glm::rotate(matRoll, angle, glm::vec3(0.f, 0.f, 1.0f));
-		//matPitch = glm::rotate(matPitch, pitch, glm::vec3(1.0f, 0.0f, 0.0f));
-		//matYaw   = glm::rotate(matYaw, yaw, glm::vec3(0.0f, 1.0f, 0.0f));
-
-		// glm::mat4 rotate = matRoll * matPitch * matYaw;
 
 		// kun yksi niin normaali eli kerrotaan yhdellä | jos 0.5 zoomattu ulos ja 2.o niiin zoom in
 		glm::vec3 scale(state->scale, state->scale, 0.0f);
 		cam->cameraMatrix = /* rotate * */ glm::scale(glm::mat4(1.0f), scale) * cam->cameraMatrix;
 		//camera scale^^
 		state->needUpdate = false;
+#endif
 	}
 }
 
 
 EXPORT DRAW_GAME(drawGraphics)
 {
-	auto* c = &engine->context;
+	GraphicsContext* c = &engine->context;
 	GraphicsState* state = (GraphicsState*)mem->memory;
 
 	if (c->updateViewPort)
@@ -725,36 +717,36 @@ EXPORT DRAW_GAME(drawGraphics)
 
 	Vec2 vel = {};
 	float speed = 40.f * engine->dt;
-	auto* controller = &engine->controller;
-	if (controller->cameraMovement[Controller::ctrl])
+	Controller* controller = &engine->controller;
+	if (controller->cameraMovement[ctrl])
 	{
 		speed *= 5.f;
 	}
-	if (controller->cameraMovement[Controller::w])
+	if (controller->cameraMovement[w])
 	{
 		vel.y += speed;
 	}
-	if (controller->cameraMovement[Controller::s])
+	if (controller->cameraMovement[s])
 	{
 		vel.y -= speed;
 	}
-	if (controller->cameraMovement[Controller::d])
+	if (controller->cameraMovement[d])
 	{
 		vel.x += speed;
 	}
-	if (controller->cameraMovement[Controller::a])
+	if (controller->cameraMovement[a])
 	{
 		vel.x -= speed;
 	}
-	if (controller->cameraMovement[Controller::q])
+	if (controller->cameraMovement[q])
 	{
 		zoom(&c->camera, 0.33f * engine->dt);
 	}
-	if (controller->cameraMovement[Controller::e])
+	if (controller->cameraMovement[e])
 	{
 		zoom(&c->camera, -0.33f * engine->dt);
 	}
-	translate(&c->camera, vel);
+	translate(&c->camera, &vel);
 
 	prepareBatch(&c->sprites, &spriteBatch);
 
