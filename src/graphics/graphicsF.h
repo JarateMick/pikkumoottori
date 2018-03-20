@@ -1,5 +1,36 @@
 #pragma once
 
+#define TEXTURE_ENUM(DO) \
+	DO(infantry) \
+	DO(circle)\
+	DO(box)\
+	DO(awesomeface)\
+	DO(noise)\
+	DO(count)
+
+#define MAKE_ENUM(VAR) Texture_##VAR,
+enum TextureEnum {
+	TEXTURE_ENUM(MAKE_ENUM)
+};
+
+#define MAKE_STRINGS(VAR) #VAR,
+const char* const TextureEnumToStr[] = {
+	TEXTURE_ENUM(MAKE_STRINGS)
+};
+
+#define MAKE_MACRO_ENUM(VAR) #VAR,
+
+#define NAMES  \
+(const char*[]) { \
+	TEXTURE_ENUM(MAKE_MACRO_ENUM) \
+}
+
+#undef TEXTURE_ENUM
+#undef MAKE_STRINGS
+#undef MAKE_ENUN
+#undef MAKE_MACRO_ENUM
+
+
 struct CameraState
 {
 	Vec2  position;
@@ -20,6 +51,18 @@ struct Sprites
 	// rotation jne
 };
 
+struct Texture2D
+{
+	int width, height;
+	unsigned int ID;
+	uint64_t writeTime;
+};
+
+struct GraphicsFuncs
+{
+	Texture2D* (*getTexture)(TextureEnum texture);
+};
+
 /// hahaa
 struct GraphicsContext
 {
@@ -28,6 +71,8 @@ struct GraphicsContext
 	CameraState camera;
 	Sprites sprites;
 	void* window;
+
+	GraphicsFuncs funcs;
 };
 
 void zoom(CameraState* camera, float factor)

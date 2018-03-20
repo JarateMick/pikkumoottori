@@ -606,73 +606,10 @@ EXPORT INIT_GAME(initGraphics)
 		ImGui::SetCurrentContext((ImGuiContext*)engine->imguiContext);
 #endif
 
-		{
-			GraphicsState* state = (GraphicsState*)mem->memory;
-			Entitys* test = &state->ents;
+		// Init functions
 
-			state->testTextures[0] = getTexture(Texture_box);
-			state->testTextures[1] = getTexture(Texture_circle);
-			state->testTextures[2] = getTexture(Texture_awesomeface);
-
-			TextureEnum names[3] = { Texture_box, Texture_circle, Texture_awesomeface };
-
-			int count = ArrayCount(Entitys::pos);
-			const int RNG_MAX = 0xFFFFFFFF;
-			for (int i = 0; i < count; ++i)
-			{
-				test->pos[i].x = rand() % (int)engine->windowDims.x;
-				test->pos[i].y = rand() % (int)engine->windowDims.y;
-			}
-
-			for (int i = 0; i < count; ++i)
-			{
-				test->size[i] = { 14.f, 14.f };
-				test->uvs[i] = { 0.f, 0.f, 1.f, 1.f };
-				test->colors[i] = { 1.f, 1.f, 1.f, 1.f };
-				test->rotation[i] = i / 10.f;
-			}
-
-			int a = getTexture(Texture_box)->ID;
-			int b = getTexture(Texture_circle)->ID;
-
-
-			for (int i = 0; i < count; ++i)
-			{
-				int r = rand() % ArrayCount(GraphicsState::testTextures);
-				test->textureId[i] = state->testTextures[r]->ID;
-				test->textureNames[i] = names[r];
-
-				if (test->textureId[i] == a || test->textureId[i] == b)
-				{
-					vec4 randomColor{ (rand() % 255) / 255.f , (rand() % 255) / 255.f, (rand() % 255) / 255.f };
-					randomColor.h = rand() % 120 / 255.f + 0.2f;
-					test->colors[i] = randomColor;
-				}
-			}
-
-			for (int i = 0; i < count; ++i)
-			{
-				test->vel[i].x = (rand() % 100) / 100.f;
-				test->vel[i].y = (rand() % 100) / 100.f;
-			}
-
-			// c->sprites.
-
-			c->sprites.colors = test->colors;
-			c->sprites.ids = test->textureId;
-			c->sprites.positions = test->pos;
-			c->sprites.sizes = test->size;
-			c->sprites.uvs = test->uvs;
-			c->sprites.rotation = test->rotation;
-			c->sprites.count = count;
-
-			test->bounds.x = 0.f;
-			test->bounds.y = 0.f;
-			test->bounds.w = engine->windowDims.x;
-			test->bounds.h = engine->windowDims.y;
-
-
-		}
+		auto* funcs = &c->funcs;
+		funcs->getTexture = getTexture;
 	}
 }
 
@@ -680,6 +617,7 @@ EXPORT UPDATE_GAME(updateGraphics)
 {
 	auto* c = &engine->context;
 
+#if 0
 	if (engine->controller.mouseDown)
 	{
 		Vec2 pos = engine->controller.mousePos;
@@ -701,6 +639,7 @@ EXPORT UPDATE_GAME(updateGraphics)
 			}
 		}
 	}
+#endif
 
 	if (engine->reloadGraphics)
 	{
@@ -723,6 +662,7 @@ EXPORT UPDATE_GAME(updateGraphics)
 
 		initSpriteBatch(&spriteBatch);
 
+#if 0
 		GraphicsState* state = (GraphicsState*)mem->memory;
 		state->testTextures[0] = getTexture(Texture_box);
 		state->testTextures[1] = getTexture(Texture_circle);
@@ -733,6 +673,7 @@ EXPORT UPDATE_GAME(updateGraphics)
 		{
 			ents->textureId[i] = getTexture(ents->textureNames[i])->ID;
 		}
+#endif
 
 		initCamera(&camera, engine->windowDims.x, engine->windowDims.y);
 	}
@@ -773,6 +714,7 @@ EXPORT DRAW_GAME(drawGraphics)
 {
 	auto* c = &engine->context;
 	GraphicsState* state = (GraphicsState*)mem->memory;
+
 	if (c->updateViewPort)
 	{
 		glViewport(0, 0, engine->windowDims.x, engine->windowDims.y);
@@ -813,43 +755,6 @@ EXPORT DRAW_GAME(drawGraphics)
 		zoom(&c->camera, -0.33f * engine->dt);
 	}
 	translate(&c->camera, vel);
-
-	Entitys* test = &state->ents;
-#ifndef __EMSCRIPTEN__
-	ImGui::DragFloat2("bounds x, y", (&test->bounds.x));
-	ImGui::DragFloat2("bounds w, h", (&test->bounds.w));
-#endif
-
-	float unitSpeed = 100 * engine->dt;
-	for (int i = 0; i < BENCH_COUNT; ++i)
-	{
-		test->pos[i].x += test->vel[i].x * unitSpeed;
-		test->pos[i].y += test->vel[i].y * unitSpeed;
-	}
-
-	for (int i = 0; i < BENCH_COUNT; ++i)
-	{
-		if (test->pos[i].x < test->bounds.x | test->pos[i].x > test->bounds.w)
-		{
-			test->vel[i].x = -test->vel[i].x;
-			test->pos[i].x = test->pos[i].x < test->bounds.x ? test->bounds.x : test->bounds.w - 1.f;
-		}
-
-		if (test->pos[i].y < test->bounds.y | test->pos[i].y > test->bounds.h)
-		{
-			test->vel[i].y = -test->vel[i].y;
-			test->pos[i].y = test->pos[i].y < test->bounds.y ? test->bounds.y : test->bounds.h - 1.f;
-		}
-	}
-
-	for (int i = 0; i < BENCH_COUNT / 2; ++i)
-	{
-		test->rotation[i] += test->vel[i].x;
-	}
-	for (int i = BENCH_COUNT / 2; i < BENCH_COUNT; ++i)
-	{
-		test->rotation[i] -= test->vel[i].x;
-	}
 
 	prepareBatch(&c->sprites, &spriteBatch);
 

@@ -183,15 +183,16 @@ extern "C" int mainf()
 	engine.imguiContext = (void*)ImGui::GetCurrentContext();
 #endif
 
+	if (graphics.gameInitPtr)
+	{
+		graphics.gameInitPtr(&engine, &graphics.memory);
+	}
+
 	if (app.gameInitPtr)
 	{
 		app.gameInitPtr(&engine, &app.memory);
 	}
 
-	if (graphics.gameDrawPtr)
-	{
-		graphics.gameInitPtr(&engine, &graphics.memory);
-	}
 
 
 	float dt = 0.f;
