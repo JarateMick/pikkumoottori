@@ -1,26 +1,53 @@
 #define _CRT_SECURE_NO_WARNINGS 1
 #include "game.h"
 
+#include <stdlib.h>
 
-// static Texture2D* (*getTexture)(TextureEnum texture);
-// void initWalls(GameState* state, Sprites* sprites, int start);
+static Texture2D* (*getTexture)(TextureEnum texture);
+void initWalls(GameState* state, Sprites* sprites, int start);
+
+static inline Vec2 V2(float x, float y)
+{
+	Vec2 result = { x, y };
+	return result;
+}
+
+static inline vec3 V3(float x, float y, float z)
+{
+	vec3 result = { x, y, z };
+	return result;
+}
+
+static inline vec4 V4(float x, float y, float z, float w)
+{
+	vec4 result = { x, y, z, w };
+	return result;
+}
 
 EXPORT INIT_GAME(initGame)
 {
 	LOGI("game init\n");
 
-#if 0
 	GraphicsContext* c = &engine->context;
-	zoom(&c->camera, 1.f);
-#endif
-
-	// init global funcs
-#if 0
-	getTexture = c->funcs.getTexture;
+	// zoom(&c->camera, 1.f);
 
 	{
-		GameState* state = (GameState*)mem->memory;
-		Entitys* test = &state->ents;
+		c->camera.scale = 1.f; // default scale
+		c->camera.needUpdate = true;
+		// c-.camera.position = 
+	}
+
+
+
+	getTexture = c->funcs.getTexture;
+	// init global funcs
+	GameState* state = (GameState*)mem->memory;
+	Entitys* test = &state->ents;
+
+
+#if 1
+
+	{
 
 		state->testTextures[0] = getTexture(Texture_box);
 		state->testTextures[1] = getTexture(Texture_circle);
@@ -38,9 +65,9 @@ EXPORT INIT_GAME(initGame)
 
 		for (int i = 0; i < count; ++i)
 		{
-			test->size[i] = { 14.f, 14.f };
-			test->uvs[i] = { 0.f, 0.f, 1.f, 1.f };
-			test->colors[i] = { 1.f, 1.f, 1.f, 1.f };
+			test->size[i] = V2(14.f, 14.f);
+			test->uvs[i] = V4(0.f, 0.f, 1.f, 1.f);
+			test->colors[i] = V4(1.f, 1.f, 1.f, 1.f);
 			test->rotation[i] = i / 10.f;
 		}
 
@@ -50,13 +77,13 @@ EXPORT INIT_GAME(initGame)
 
 		for (int i = 0; i < count; ++i)
 		{
-			int r = rand() % ArrayCount(GameState::testTextures);
+			int r = rand() % 3;
 			test->textureId[i] = state->testTextures[r]->ID;
 			test->textureNames[i] = names[r];
 
 			if (test->textureId[i] == a || test->textureId[i] == b)
 			{
-				vec4 randomColor{ (rand() % 255) / 255.f , (rand() % 255) / 255.f, (rand() % 255) / 255.f };
+				vec4 randomColor = { (rand() % 255) / 255.f , (rand() % 255) / 255.f, (rand() % 255) / 255.f };
 				randomColor.h = rand() % 120 / 255.f + 0.2f;
 				test->colors[i] = randomColor;
 			}
@@ -89,39 +116,41 @@ EXPORT INIT_GAME(initGame)
 #endif
 }
 
-#if 0
+#if 1
 static void makeSprite(Sprites* s, Vec2 pos, Vec2 size, int textureID)
 {
 	int id = s->count;
 	s->positions[id] = pos;
 	s->sizes[id] = size;
-	s->colors[id] = { 1.f, 1.f, 1.f, 1.f };
+	s->colors[id] = V4(1.f, 1.f, 1.f, 1.f);
 	s->ids[id] = textureID;
 	s->rotation[id] = 0.f;
-	s->uvs[id] = { 0.f, 0.f, 1.0f, 1.0f };
+	s->uvs[id] = V4(0.f, 0.f, 1.0f, 1.0f);
 	s->count += 1;
 }
 
 // bottom left is origo
 static void makeWall(Sprites* s, Vec2 pos, Vec2 size, int id)
 {
-	pos += size / 2.f;
+	// pos += size / 2.f;
+	vec2 translate = vec2_div(&size, 2.f);
+	pos = vec2_addv(&pos, &translate);
 	makeSprite(s, pos, size, id);
 }
 
 static void initWalls(GameState* state, Sprites* s, int startIndex)
 {
-	auto texture = getTexture(Texture_box);
+	Texture2D* texture = getTexture(Texture_box);
 
 	// bottom
-	makeWall(s, { 0.f, 0.f },   { 10.f, 100.f, }, texture->ID);
+	makeWall(s, V2(0.f, 0.f), V2(10.f, 100.f), texture->ID);
 	// right
-	makeWall(s, { 100.f - 10.f, 0.f }, { 10.f, 100.f, }, texture->ID);
+	makeWall(s, V2(100.f - 10.f, 0.f), V2(10.f, 100.f), texture->ID);
 	// top
-	makeWall(s, { 0.f, 100.f - 10.f }, { 100.f, 10.f, }, texture->ID);
+	makeWall(s, V2(0.f, 100.f - 10.f), V2(100.f, 10.f), texture->ID);
 	// left
-	makeWall(s, { 0.f, 0.f },   { 100.f, 10.f, }, texture->ID);
-	
+	makeWall(s, V2(0.f, 0.f), V2(100.f, 10.f), texture->ID);
+
 	// makeWall(s, { 0.f, 0.f },   { 100.f, 10.f, }, texture->ID);
 	// makeWall(s, { 0.f, 100.f }, { 100.f, 10.f, }, texture->ID);
 }
@@ -135,7 +164,7 @@ EXPORT UPDATE_GAME(updateGame)
 	GameState* gameState = (GameState*)mem->memory;
 	Entitys* test = &gameState->ents;
 
-#if 0
+#if 1
 
 	float unitSpeed = 100 * engine->dt;
 	for (int i = 0; i < BENCH_COUNT; ++i)
@@ -180,8 +209,5 @@ EXPORT DRAW_GAME(drawGame)
 	// ImGui::DragFloat2("bounds w, h", (&test->bounds.w));
 #endif
 
-	/*for (int i = BENCH_COUNT; i < BENCH_COUNT + 100; ++i)
-	{
-		gameState->ents.pos[i] = { i * 2.f, 0.f };
-	}*/
+
 }

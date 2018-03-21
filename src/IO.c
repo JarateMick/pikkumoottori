@@ -18,15 +18,23 @@ char* io_read_file(const char* path)
 	FILE *file = fopen(path, "r");
 	if (file)
 	{
-		fseek(file, 0L, SEEK_END);
-		size_t fileSize = ftell(file);
+		if (fseek(file, 0L, SEEK_END) == 0) 
+		{
+			long bufsize = ftell(file);
+			if (bufsize == -1) { /* Error */ }
 
-		fseek(file, 0L, SEEK_SET);
-		result = malloc(fileSize + 1);
+			result = malloc(sizeof(char) * (bufsize + 1));
 
-		fread(result, sizeof(char), fileSize, file);
-		result[fileSize] = '\0';
+			if (fseek(file, 0L, SEEK_SET) != 0) { /* Error */ }
 
+			size_t newLen = fread(result, sizeof(char), bufsize, file);
+			if (ferror(file) != 0) {
+				fputs("Error reading file", stderr);
+			}
+			else {
+				result[newLen++] = '\0'; /* Just to be safe. */
+			}
+		}
 		fclose(file);
 	}
 	else

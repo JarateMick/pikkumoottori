@@ -4,7 +4,7 @@
 #include "graphicsF.h"
 #include "shader.c"
 
-#define MAX_SPRITES 500000
+#define MAX_SPRITES 500058
 typedef struct 
 {
 	float pos[MAX_SPRITES * 16];
@@ -28,15 +28,15 @@ typedef struct
 
 typedef struct 
 {
-	mat4 cameraMatrix;
-	mat4 orthoMatrix;
+	mat4x4 cameraMatrix;
+	mat4x4 orthoMatrix;
 	// glm::mat4 cameraMatrix;
 	// glm::mat4 orthoMatrix;
 } Camera2D;
 
 typedef struct 
 {
-
+	float empty;
 } GraphicsState;
 
 

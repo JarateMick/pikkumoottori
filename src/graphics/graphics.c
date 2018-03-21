@@ -296,10 +296,10 @@ void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 
 		for (int i = 0; i < count * 4; i += 4)
 		{
-			int r = (int)color->x * 255.0f;
-			int g = (int)color->y * 255.0f;
-			int b = (int)color->w * 255.0f;
-			int a = (int)color->h * 255.0f;
+			int r = (int)(color->x * 255.0f);
+			int g = (int)(color->y * 255.0f);
+			int b = (int)(color->w * 255.0f);
+			int a = (int)(color->h * 255.0f);
 
 			unsigned int c = (a << 24 | b << 16 | g << 8 | r);
 
@@ -413,7 +413,7 @@ void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 	// END_TIMING2();
 }
 
-void renderBatch(Sprites* sprites, SpriteBatch* sb, mat4* cam)
+void renderBatch(Sprites* sprites, SpriteBatch* sb, mat4x4* cam)
 {
 	int count = sprites->count;
 	VertexData* vertexData = &sb->vertexData;
@@ -436,7 +436,8 @@ void renderBatch(Sprites* sprites, SpriteBatch* sb, mat4* cam)
 	glCheckError();
 
 	shader_use(&sb->shader);
-	shader_set_mat4(&sb->shader, "position", cam);
+	// shader_set_mat4(&sb->shader, "position", cam);
+	glUniformMatrix4fv(glGetUniformLocation(sb->shader.ID, "position"), 1, GL_FALSE, (GLfloat*)cam);
 	// sb->shader.setMat4("position", *cam);
 
 	glBindVertexArray(sb->VAO);
@@ -680,22 +681,35 @@ EXPORT UPDATE_GAME(updateGraphics)
 
 void initCamera(Camera2D* cam, int screenW, int screenH)
 {
-	memset(cam, 0, sizeof(*cam));
-	// cam->orthoMatrix = glm::ortho(0.0f, (float)screenW, 0.0f, (float)screenH);
+	// glm::ortho(0.0f, (float)screenW, 0.0f, (float)screenH);
+	mat4x4_ortho(cam->orthoMatrix, 0.0f, (float)screenW, 0.f, (float)screenH, -1.f, 1.f);
 }
 
 void updateCamera(Camera2D* cam, CameraState* state, Vec2* screen)
 {
 	if (state->needUpdate)
 	{
-#if 0
-		glm::vec3 translate(-state->position.x + screen->x / 2, -state->position.y + screen->y / 2, 0.0f);  //centeroi cameran myösä
-		cam->cameraMatrix = glm::translate(cam->orthoMatrix, translate);
+#if 1
+		
+		//glm::vec3 translate(-state->position.x + screen->x / 2, -state->position.y + screen->y / 2, 0.0f);  //centeroi cameran myösä
+		// cam->cameraMatrix = glm::translate(cam->orthoMatrix, translate);
+
+		mat4x4 trans;
+		mat4x4_dup(trans, cam->orthoMatrix);
+		mat4x4_translate_in_place(trans, -state->position.x + screen->x / 2, -state->position.y + screen->y / 2, 0.f);
 
 		// kun yksi niin normaali eli kerrotaan yhdellä | jos 0.5 zoomattu ulos ja 2.o niiin zoom in
-		glm::vec3 scale(state->scale, state->scale, 0.0f);
-		cam->cameraMatrix = /* rotate * */ glm::scale(glm::mat4(1.0f), scale) * cam->cameraMatrix;
+
+		// glm::vec3 scale(state->scale, state->scale, 0.0f);
+		// cam->cameraMatrix = /* rotate * */ glm::scale(glm::mat4(1.0f), scale) * cam->cameraMatrix;
 		//camera scale^^
+
+		mat4x4 scl;
+		mat4x4_identity(scl);
+		mat4x4_scale(scl, scl, state->scale);
+		mat4x4_mul(trans, trans, scl);
+
+		mat4x4_dup(cam->cameraMatrix, trans);//cam->orthoMatrix);
 		state->needUpdate = false;
 #endif
 	}
@@ -715,7 +729,7 @@ EXPORT DRAW_GAME(drawGraphics)
 	glClear(GL_COLOR_BUFFER_BIT);
 
 
-	Vec2 vel = {};
+	Vec2 vel = { 0 };
 	float speed = 40.f * engine->dt;
 	Controller* controller = &engine->controller;
 	if (controller->cameraMovement[ctrl])
@@ -746,7 +760,8 @@ EXPORT DRAW_GAME(drawGraphics)
 	{
 		zoom(&c->camera, -0.33f * engine->dt);
 	}
-	translate(&c->camera, &vel);
+	if (vel.x != 0.f || vel.y != 0)
+		translate(&c->camera, &vel);
 
 	prepareBatch(&c->sprites, &spriteBatch);
 

@@ -65,7 +65,7 @@ set /A pdb_num+=1
 
 
 if /I "%DEBUG%"=="release" (
-	set CFLAGS=%CFLAGS% -Ox -Ot -Oi -Ob2
+	set CFLAGS=%CFLAGS% -O3
 )
 
 
@@ -77,9 +77,9 @@ echo %me% "WAITING FOR PDB ..." > lock.tmp
 set GRAPHICS_LIBS= opengl32.lib game_commondebug.lib %LIBS%
 set GRAPHICS_SRC=..\src\graphics\graphics.c
 
-clang  --shared %CFLAGS% %includes% %GRAPHICS_SRC% -o graphics.dll -z -incremental:no -z -DEBUG:FASTLINK
+clang  --shared %CFLAGS% %includes% %GRAPHICS_SRC% -o graphics.dll -z -incremental:no 
 :: /MD -LD 
-:: /link %GRAPHICS_LIBS%  %LFLAGS% %LIBPATH%
+:: /link %GRAPHICS_LIBS%  %LFLAGS% %LIBPATH% -z -DEBUG:FASTLINK
 del lock.tmp
 )
 
@@ -90,8 +90,8 @@ echo %me% "WAITING FOR PDB ..." > lock.tmp
 set GAME_LIBS=
 set GAME_SRC=..\src\application\game.c
 
-clang --shared %CFLAGS% %includes% %GAME_SRC% -o game.dll -z -incremental:no -z -DEBUG:FASTLINK
-::%GAME_LIBS% %LFLAGS% %PDB% %LIBPATH%
+clang --shared %CFLAGS% %includes% %GAME_SRC% -o game.dll -z -incremental:no 
+::%GAME_LIBS% %LFLAGS% %PDB% %LIBPATH% -z -DEBUG:FASTLINK
 del lock.tmp
 )
 

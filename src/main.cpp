@@ -193,8 +193,6 @@ extern "C" int mainf()
 		app.gameInitPtr(&engine, &app.memory);
 	}
 
-
-
 	float dt = 0.f;
 #ifndef __EMSCRIPTEN__
 	while (!quit) {
@@ -273,6 +271,19 @@ extern "C" int mainf()
 
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::Text("hello world");
+
+
+
+		if (ImGui::Button("reinit graphics"))
+		{
+			app.gameInitPtr(&engine, &app.memory);
+		}
+
+		if (ImGui::Button("reinit game"))
+		{
+			graphics.gameInitPtr(&engine, &graphics.memory);
+		}
+
 
 		update(&app);
 

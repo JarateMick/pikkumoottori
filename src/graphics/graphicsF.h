@@ -87,16 +87,16 @@ void zoom(CameraState* camera, float factor)
 void translate(CameraState* camera, Vec2* position)
 {
 	camera->needUpdate = true;
-	vec2_addv(&camera->position, position);
+	camera->position = vec2_addv(&camera->position, position);
 }
 
 Vec2 convertScreenToWorld(CameraState* camera, Vec2 screenCoords, Vec2* screenDims)
 {
 	screenCoords.y = screenDims->y - screenCoords.y;
 	Vec2 dimsHalf = { screenDims->x / 2, screenDims->y / 2 };
-	vec2_subv(&screenCoords, &dimsHalf);
-	vec2_div(&screenCoords, camera->scale);
-	vec2_addv(&screenCoords, &camera->position);
+	screenCoords = vec2_subv(&screenCoords, &dimsHalf);
+	screenCoords = vec2_div(&screenCoords, camera->scale);
+	screenCoords = vec2_addv(&screenCoords, &camera->position);
 	return screenCoords;
 }
 

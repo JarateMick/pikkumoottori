@@ -45,8 +45,8 @@ static inline Vec2 vec2_subv(Vec2* a, Vec2* b)
 static inline Vec2 vec2_div(Vec2* a, float s)
 {
 	Vec2 result;
-	result.x = a->x /= s;
-	result.y = a->y /= s;
+	result.x = a->x / s;
+	result.y = a->y / s;
 	return result;
 }
 

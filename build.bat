@@ -75,7 +75,7 @@ echo %me% "WAITING FOR PDB ..." > lock.tmp
 
 set PDB= -PDB:graphics_%pdb_num%.pdb 
 set GRAPHICS_LIBS= opengl32.lib game_commondebug.lib %LIBS%
-set GRAPHICS_SRC=..\src\graphics\graphics.cpp
+set GRAPHICS_SRC=..\src\graphics\graphics.c
 
 cl %CFLAGS% %includes% %GRAPHICS_SRC% /MD -LD /link %GRAPHICS_LIBS%  %LFLAGS% %PDB% %LIBPATH%
 del lock.tmp
@@ -87,7 +87,10 @@ echo %me% "WAITING FOR PDB ..." > lock.tmp
 
 set PDB= -PDB:graphics_%pdb_num%.pdb 
 set GAME_LIBS=
-set GAME_SRC=..\src\application\game.cpp
+
+set GAME_SRC=..\src\application\game.c
+
+
 
 cl %CFLAGS% %includes% %GAME_SRC% /MD -LD /link %GAME_LIBS% %LFLAGS% %PDB% %LIBPATH%
 del lock.tmp

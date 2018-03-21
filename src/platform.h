@@ -80,6 +80,9 @@ typedef struct
 #include <vec2.h>
 #include <vec3.h>
 #include <vec4.h>
+#include <3rdparty/linmath.h>
+
+
 #undef ignore
 #undef introspect
 
@@ -112,7 +115,6 @@ enum CameraKeys
 
 typedef struct
 {
-
 
 	bool32 jump;
 	bool32 cameraMovement[size];

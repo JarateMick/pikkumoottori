@@ -37,6 +37,9 @@ Shader shader_compile_from_file(const char* vertexFilepath, const char* fragment
 	fragmentCode = io_read_file(fragmentFilepath);
 
 	return shader_compile_shaders_from_source(vertexCode, fragmentCode, vertexFilepath, fragmentFilepath);
+
+	free(vertexCode);
+	free(fragmentCode);
 }
 
 void shader_set_ints(Shader* shader, const char* name, int count, int* values)
