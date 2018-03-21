@@ -183,15 +183,9 @@ extern "C" int mainf()
 	engine.imguiContext = (void*)ImGui::GetCurrentContext();
 #endif
 
-	if (graphics.gameInitPtr)
-	{
-		graphics.gameInitPtr(&engine, &graphics.memory);
-	}
+	callInit(&engine, &graphics); // INIT BEFORE APP
+	callInit(&engine, &app);
 
-	if (app.gameInitPtr)
-	{
-		app.gameInitPtr(&engine, &app.memory);
-	}
 
 	float dt = 0.f;
 #ifndef __EMSCRIPTEN__
@@ -274,12 +268,12 @@ extern "C" int mainf()
 
 
 
-		if (ImGui::Button("reinit graphics"))
+		if (ImGui::Button("reinit game"))
 		{
 			app.gameInitPtr(&engine, &app.memory);
 		}
 
-		if (ImGui::Button("reinit game"))
+		if (ImGui::Button("reinit graphics"))
 		{
 			graphics.gameInitPtr(&engine, &graphics.memory);
 		}
@@ -289,28 +283,12 @@ extern "C" int mainf()
 
 		if (update(&graphics))
 			engine.reloadGraphics = true;
-
 #endif
 
-		if (app.gameUpdatePtr)
-		{
-			app.gameUpdatePtr(&engine, &app.memory);
-		}
-
-		if (graphics.gameUpdatePtr)
-		{
-			graphics.gameUpdatePtr(&engine, &graphics.memory);
-		}
-
-		if (app.gameDrawPtr)
-		{
-			app.gameDrawPtr(&engine, &app.memory);
-		}
-
-		if (graphics.gameUpdatePtr)
-		{
-			graphics.gameDrawPtr(&engine, &graphics.memory);
-		}
+		callUpdate(&engine, &app);
+		callUpdate(&engine, &graphics);
+		callRender(&engine, &app);
+		callRender(&engine, &graphics);
 
 		Vec2 mousePos = convertScreenToWorld(&engine.context.camera, engine.controller.mousePos, &engine.windowDims);
 		ImGui::Text("Mouse (%f %f)", mousePos.x, mousePos.y);

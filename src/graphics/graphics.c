@@ -556,18 +556,15 @@ static Texture2D loadTextureE(TextureEnum texture)
 
 // can you implement sorter XD
 // shame that it 'leaks' and can't handle hotreloading textures XD
-static Texture2D* getTexture(TextureEnum texture)
+
+static Texture2D* getTexture(ResourceHolder* h, TextureEnum texture)
 {
-	static Texture2D textureCache[Texture_count] = { 0 };
-	static bool32 loaded[Texture_count] = { 0 };
-
-	if (!loaded[texture])
+	if (!h->loaded[texture])
 	{
-		textureCache[texture] = loadTextureE(texture);
-		loaded[texture] = true;
+		h->textures[texture] = loadTextureE(texture);
+		h->loaded[texture] = true;
 	}
-
-	return &textureCache[texture];
+	return &h->textures[texture];
 }
 
 void initCamera(Camera2D* cam, int screenW, int screenH);
@@ -613,6 +610,9 @@ EXPORT INIT_GAME(initGraphics)
 	}
 }
 
+
+// tekstuurit jaavat inisoimattomaan tilaan kun dll hotreloadataan
+// todo tekstuuri cache pitka kestoiseen muistiin!
 EXPORT UPDATE_GAME(updateGraphics)
 {
 	GraphicsContext* c = &engine->context;
@@ -658,9 +658,30 @@ EXPORT UPDATE_GAME(updateGraphics)
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glClearColor(114.f / 255.0f, 144.f / 255.0f, 154.f / 255.0f, 1.0f);
 
-		// ImGui::SetCurrentContext((ImGuiContext*)engine->imguiContext);
-
 		initSpriteBatch(&spriteBatch);
+
+
+	/*	ResourceHolder* h = &c->resourceHolder;
+		int oldIds[Texture_count];
+		int newIds[Texture_count];
+		for (int i = 0; i < Texture_count; ++i)
+		{
+			if (h->loaded[i])
+			{
+				oldIds[i] = h->textures[i].ID;
+				h->loaded[i] = false;
+				newIds[i] = getTexture(h, (TextureEnum)i)->ID;
+			}
+		}
+
+		for (int i = 0; i < c->sprites.count; ++i)
+		{
+			if (c->sprites.ids[i] >= 0 && c->sprites.ids[i] < Texture_count)
+			{
+				int old = c->sprites.ids[i];
+				c->sprites.ids[i] = newIds[old];
+			}
+		}*/
 
 #if 0
 		GraphicsState* state = (GraphicsState*)mem->memory;

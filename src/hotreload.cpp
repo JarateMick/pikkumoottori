@@ -150,6 +150,30 @@ static bool loadGameDll(ApplicationFunctions* app, const char* dllName)
 		return false;
 }
 
+void callUpdate(EngineContext* engine, ApplicationFunctions* app)
+{
+	if (app->gameUpdatePtr)
+	{
+		app->gameUpdatePtr(engine, &app->memory);
+	}
+}
+
+void callRender(EngineContext* engine, ApplicationFunctions* app)
+{
+	if (app->gameDrawPtr)
+	{
+		app->gameDrawPtr(engine, &app->memory);
+	}
+}
+
+void callInit(EngineContext* engine, ApplicationFunctions* app)
+{
+	if (app->gameInitPtr)
+	{
+		app->gameInitPtr(engine, &app->memory);
+	}
+}
+
 bool update(ApplicationFunctions* app)
 {
 	size_t writeTime = getWriteTime(app->name);

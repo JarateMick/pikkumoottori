@@ -58,13 +58,21 @@ typedef struct
 	uint64_t writeTime;
 } Texture2D;
 
+
+typedef struct
+{
+	Texture2D textures[Texture_count];
+	int loaded[Texture_count];
+} ResourceHolder;
+
+
 typedef struct 
 {
-	Texture2D* (*getTexture)(TextureEnum texture);
+	Texture2D* (*getTexture)(ResourceHolder* h, TextureEnum texture);
 } GraphicsFuncs;
 
 /// hahaa
-typedef struct 
+typedef struct GraphicsContex
 {
 	bool32 initted;
 	bool32 updateViewPort;
@@ -73,6 +81,7 @@ typedef struct
 	void* window;
 
 	GraphicsFuncs funcs;
+	ResourceHolder resourceHolder;
 } GraphicsContext;
 
 void zoom(CameraState* camera, float factor)

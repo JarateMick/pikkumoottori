@@ -3,8 +3,8 @@
 
 #include <stdlib.h>
 
-static Texture2D* (*getTexture)(TextureEnum texture);
-void initWalls(GameState* state, Sprites* sprites, int start);
+static Texture2D* (*getTexture)(ResourceHolder* h, TextureEnum texture);
+void initWalls(GameState* state, Sprites* sprites, int texId,  int start);
 
 static inline Vec2 V2(float x, float y)
 {
@@ -48,10 +48,10 @@ EXPORT INIT_GAME(initGame)
 #if 1
 
 	{
-
-		state->testTextures[0] = getTexture(Texture_box);
-		state->testTextures[1] = getTexture(Texture_circle);
-		state->testTextures[2] = getTexture(Texture_awesomeface);
+		ResourceHolder* h = &c->resourceHolder;
+		state->testTextures[0] = getTexture(h, Texture_box);
+		state->testTextures[1] = getTexture(h, Texture_circle);
+		state->testTextures[2] = getTexture(h, Texture_awesomeface);
 
 		TextureEnum names[3] = { Texture_box, Texture_circle, Texture_awesomeface };
 
@@ -71,8 +71,8 @@ EXPORT INIT_GAME(initGame)
 			test->rotation[i] = i / 10.f;
 		}
 
-		int a = getTexture(Texture_box)->ID;
-		int b = getTexture(Texture_circle)->ID;
+		int a = getTexture(h, Texture_box)->ID;
+		int b = getTexture(h, Texture_circle)->ID;
 
 
 		for (int i = 0; i < count; ++i)
@@ -95,7 +95,7 @@ EXPORT INIT_GAME(initGame)
 			test->vel[i].y = (rand() % 100) / 100.f;
 		}
 
-		// c->sprites.
+		// c->sprites.;
 
 		c->sprites.colors = test->colors;
 		c->sprites.ids = test->textureId;
@@ -110,7 +110,7 @@ EXPORT INIT_GAME(initGame)
 		test->bounds.w = engine->windowDims.x * 1.f;
 		test->bounds.h = engine->windowDims.y * 1.f;
 
-		initWalls(state, &c->sprites, BENCH_COUNT);
+		initWalls(state, &c->sprites, a, BENCH_COUNT);
 	}
 
 #endif
@@ -138,18 +138,16 @@ static void makeWall(Sprites* s, Vec2 pos, Vec2 size, int id)
 	makeSprite(s, pos, size, id);
 }
 
-static void initWalls(GameState* state, Sprites* s, int startIndex)
+static void initWalls(GameState* state, Sprites* s, int texId, int startIndex)
 {
-	Texture2D* texture = getTexture(Texture_box);
-
 	// bottom
-	makeWall(s, V2(0.f, 0.f), V2(10.f, 100.f), texture->ID);
+	makeWall(s, V2(0.f, 0.f), V2(10.f, 100.f), texId);
 	// right
-	makeWall(s, V2(100.f - 10.f, 0.f), V2(10.f, 100.f), texture->ID);
-	// top
-	makeWall(s, V2(0.f, 100.f - 10.f), V2(100.f, 10.f), texture->ID);
+	makeWall(s, V2(100.f - 10.f, 0.f), V2(10.f, 100.f), texId);
+	// top;
+	makeWall(s, V2(0.f, 100.f - 10.f), V2(100.f, 10.f), texId);
 	// left
-	makeWall(s, V2(0.f, 0.f), V2(100.f, 10.f), texture->ID);
+	makeWall(s, V2(0.f, 0.f), V2(100.f, 10.f), texId);
 
 	// makeWall(s, { 0.f, 0.f },   { 100.f, 10.f, }, texture->ID);
 	// makeWall(s, { 0.f, 100.f }, { 100.f, 10.f, }, texture->ID);
