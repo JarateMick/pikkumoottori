@@ -1,28 +1,11 @@
 #define _CRT_SECURE_NO_WARNINGS 1
 #include "game.h"
 
-#include <stdlib.h>
 
 static Texture2D* (*getTexture)(ResourceHolder* h, TextureEnum texture);
 void initWalls(GameState* state, Sprites* sprites, int texId,  int start);
 
-static inline Vec2 V2(float x, float y)
-{
-	Vec2 result = { x, y };
-	return result;
-}
 
-static inline vec3 V3(float x, float y, float z)
-{
-	vec3 result = { x, y, z };
-	return result;
-}
-
-static inline vec4 V4(float x, float y, float z, float w)
-{
-	vec4 result = { x, y, z, w };
-	return result;
-}
 
 EXPORT INIT_GAME(initGame)
 {
@@ -44,14 +27,16 @@ EXPORT INIT_GAME(initGame)
 	GameState* state = (GameState*)mem->memory;
 	Entitys* test = &state->ents;
 
+	state->count = PARTICLE_COUNT;
+	initializeParticles(state->particles, state->count);
 
 #if 1
 
 	{
 		ResourceHolder* h = &c->resourceHolder;
-		state->testTextures[0] = getTexture(h, Texture_box);
-		state->testTextures[1] = getTexture(h, Texture_circle);
-		state->testTextures[2] = getTexture(h, Texture_awesomeface);
+		state->testTextures[0] = getTexture(h, Texture_circle);
+		state->testTextures[1] = getTexture(h, Texture_awesomeface);
+		state->testTextures[2] = getTexture(h, Texture_box);
 
 		TextureEnum names[3] = { Texture_box, Texture_circle, Texture_awesomeface };
 
@@ -65,7 +50,7 @@ EXPORT INIT_GAME(initGame)
 
 		for (int i = 0; i < count; ++i)
 		{
-			test->size[i] = V2(14.f, 14.f);
+			test->size[i] = V2(10.f, 10.f);
 			test->uvs[i] = V4(0.f, 0.f, 1.f, 1.f);
 			test->colors[i] = V4(1.f, 1.f, 1.f, 1.f);
 			test->rotation[i] = i / 10.f;
@@ -77,7 +62,7 @@ EXPORT INIT_GAME(initGame)
 
 		for (int i = 0; i < count; ++i)
 		{
-			int r = rand() % 3;
+			int r = rand() % 1;
 			test->textureId[i] = state->testTextures[r]->ID;
 			test->textureNames[i] = names[r];
 
@@ -110,8 +95,9 @@ EXPORT INIT_GAME(initGame)
 		test->bounds.w = engine->windowDims.x * 1.f;
 		test->bounds.h = engine->windowDims.y * 1.f;
 
-		initWalls(state, &c->sprites, a, BENCH_COUNT);
+		// initWalls(state, &c->sprites, a, BENCH_COUNT);
 	}
+
 
 #endif
 }
@@ -162,7 +148,17 @@ EXPORT UPDATE_GAME(updateGame)
 	GameState* gameState = (GameState*)mem->memory;
 	Entitys* test = &gameState->ents;
 
-#if 1
+
+	hashParticles(gameState, gameState->particles);
+	updateParticles(gameState->particles, gameState->count, engine->dt);
+
+	for (int i = 0; i < 1000; ++i)
+	{
+		gameState->ents.pos[i] = gameState->particles[i].position;
+	}
+	
+
+#if 0
 
 	float unitSpeed = 100 * engine->dt;
 	for (int i = 0; i < BENCH_COUNT; ++i)

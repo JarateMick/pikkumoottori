@@ -114,11 +114,11 @@ static inline void* mapBufferRange(unsigned int type, unsigned int buffer, uint3
 
 #define NO_COPY 1
 #define NO_MEMCPY 0
-#define POS_SIZE  sizeof(float) * 4 * 4 * MAX_SPRITES
-#define UV_SIZE   sizeof(float) * 4 * 2 * MAX_SPRITES
-#define ID_SIZE   sizeof(float) * 4 * 1 * MAX_SPRITES
-#define COLOR_SIZE  sizeof(uint32) * 4 * 1 * MAX_SPRITES
-#define ROT_SIZE  sizeof(float) * 4 * 1 * MAX_SPRITES
+#define POS_SIZE  sizeof(float) * 4 * 4 * count
+#define UV_SIZE   sizeof(float) * 4 * 2 * count
+#define ID_SIZE   sizeof(float) * 4 * 1 * count
+#define COLOR_SIZE  sizeof(uint32) * 4 * 1 * count
+#define ROT_SIZE  sizeof(float) * 4 * 1 * count
 
 void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 {
