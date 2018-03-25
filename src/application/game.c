@@ -20,14 +20,15 @@ EXPORT INIT_GAME(initGame)
 		// c-.camera.position = 
 	}
 
-
-
 	getTexture = c->funcs.getTexture;
-	// init global funcs
-	GameState* state = (GameState*)mem->memory;
-	Entitys* test = &state->ents;
 
+	GameState* state = (GameState*)mem->memory;
+	memset(state, 0, sizeof(GameState));
+
+	Entitys* test = &state->ents;
 	state->count = PARTICLE_COUNT;
+
+
 	initializeParticles(state->particles, state->count);
 
 #if 1
@@ -40,7 +41,8 @@ EXPORT INIT_GAME(initGame)
 
 		TextureEnum names[3] = { Texture_box, Texture_circle, Texture_awesomeface };
 
-		int count = BENCH_COUNT; // ArrayCount(Entitys::pos);
+		int count = PARTICLE_COUNT; // ArrayCount(Entitys::pos);
+
 		const int RNG_MAX = 0xFFFFFFFF;
 		for (int i = 0; i < count; ++i)
 		{
@@ -150,7 +152,9 @@ EXPORT UPDATE_GAME(updateGame)
 
 
 	hashParticles(gameState, gameState->particles);
+
 	updateParticles(gameState->particles, gameState->count, engine->dt);
+	doParticleCollision(gameState, engine->dt);
 
 	for (int i = 0; i < 1000; ++i)
 	{

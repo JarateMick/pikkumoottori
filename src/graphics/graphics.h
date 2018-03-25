@@ -4,7 +4,7 @@
 #include "graphicsF.h"
 #include "shader.c"
 
-#define MAX_SPRITES 500058
+#define MAX_SPRITES 300000
 typedef struct 
 {
 	float pos[MAX_SPRITES * 16];
