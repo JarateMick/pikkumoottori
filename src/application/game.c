@@ -151,10 +151,10 @@ EXPORT UPDATE_GAME(updateGame)
 	Entitys* test = &gameState->ents;
 
 
-	hashParticles(gameState, gameState->particles);
+	// hashParticles(gameState, gameState->particles);
 
 	updateParticles(gameState->particles, gameState->count, engine->dt);
-	doParticleCollision(gameState, engine->dt);
+	// doParticleCollision(gameState, engine->dt);
 
 	for (int i = 0; i < 1000; ++i)
 	{
@@ -209,3 +209,5 @@ EXPORT DRAW_GAME(drawGame)
 
 
 }
+
+

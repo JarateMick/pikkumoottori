@@ -80,6 +80,12 @@ static inline void vec2_add_v(Vec2* dest, Vec2* r, Vec2* l)
 	dest->y = r->y + l->y;
 }
 
+static inline void vec2_sub_v(Vec2* dest, Vec2* r, Vec2* l)
+{
+	dest->x = r->x - l->x;
+	dest->y = r->y - l->y;
+}
+
 static inline float vec2_len(Vec2* a)
 {
 	return sqrt(a->x * a->x + a->y * a->y);
