@@ -391,10 +391,12 @@ void calculateForces(Particle* particles, int count)
 		if (first)
 		{
 			first = false;
-			printf("f: %f %f  fpress: %f %f     fvisc %f %f \n", a->acceleration.x, a->acceleration.y,
-				fpress.x, fpress.y, fvisc.x, fvisc.y);
+			// printf("f: %f %f  fpress: %f %f     fvisc %f %f \n", a->acceleration.x, a->acceleration.y,
+				// fpress.x, fpress.y, fvisc.x, fvisc.y);
 		}
 	}
+
+	// printf("hello mouset");
 }
 
 
