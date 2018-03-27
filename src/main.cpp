@@ -265,6 +265,18 @@ extern "C" int mainf()
 
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::Text("hello world");
+		ImGui::InputInt("Runtoframe", &engine.runToFrame);
+
+		if (ImGui::Button("Reset frames"))
+		{
+			engine.runToFrame = 0;
+			engine.currentFrame = 0;
+		}
+
+		if (ImGui::Button("free run"))
+		{
+			engine.freeRun = !engine.freeRun;
+		}
 
 
 
@@ -309,6 +321,7 @@ extern "C" int mainf()
 		LOGI("DT: %f \n", engine.dt);
 //		LOGI("STILL ALIVE\n");
 	};
+
 
 #if __EMSCRIPTEN__
 	emscripten_set_main_loop(main_loop, 0, true);
