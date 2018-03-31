@@ -58,6 +58,12 @@ static inline Vec2 vec2_add(Vec2* a, float s)
 	return result;
 }
 
+static inline void vec2_add_s(Vec2* dest, Vec2* right,  float s)
+{
+	dest->x = right->x + s;
+	dest->y = right->y + s;
+}
+
 static inline Vec2 vec2_mul(Vec2* a, float s)
 {
 	Vec2 result;
@@ -109,6 +115,14 @@ static inline void vec2_add_v(Vec2* dest, Vec2* r, Vec2* l)
 {
 	dest->x = r->x + l->x;
 	dest->y = r->y + l->y;
+}
+
+static inline void vec2_add_vs(Vec2* dest, vec2* r, vec2* l, int c)
+{
+	for (int i = 0; i < c; ++i)
+	{
+		vec2_add_v(dest + i, r + i, l + i);
+	}
 }
 
 static inline void vec2_sub_v(Vec2* dest, Vec2* r, Vec2* l)

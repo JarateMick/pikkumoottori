@@ -16,6 +16,7 @@
 
 static SpriteBatch spriteBatch;
 static Camera2D camera;
+static LineBatcher lineBatcher;
 
 #define POS 0
 #define UVS 1
@@ -90,6 +91,52 @@ static void initSpriteBatch(SpriteBatch* sb)
 	glCheckError();
 }
 
+
+static void initLineBatcher(LineBatcher* lineBatcher)
+{
+	glGenVertexArrays(1, &lineBatcher->VAO);
+
+	glGenBuffers(1, &lineBatcher->posVBO);
+	glGenBuffers(1, &lineBatcher->colorVBO);
+
+	glBindVertexArray(lineBatcher->VAO);
+
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+
+	glBindBuffer(GL_ARRAY_BUFFER, lineBatcher->posVBO);
+	glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0);
+	glBufferData(GL_ARRAY_BUFFER, 0, NULL, GL_DYNAMIC_DRAW);
+	
+	glBindBuffer(GL_ARRAY_BUFFER, lineBatcher->colorVBO);
+	glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, false, 0, 0);
+	glBufferData(GL_ARRAY_BUFFER, 0, NULL, GL_DYNAMIC_DRAW);
+
+	lineBatcher->shader = shader_compile_from_file("assets/shaders/lines.vs", "assets/shaders/lines.fs");
+	glCheckError();
+}
+
+static void renderLines(LineBatcher* lineBatcher, Lines* lines, mat4x4* cam)
+{
+	shader_use(&lineBatcher->shader);
+
+//	shader_set_mat4(&lineBatcher->shader, "position", mat);
+	glUniformMatrix4fv(glGetUniformLocation(lineBatcher->shader.ID, "position"), 1, GL_FALSE, (GLfloat*)cam);
+
+	glBindBuffer(GL_ARRAY_BUFFER, lineBatcher->posVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * lines->count * 2, lines->lineVertices, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, lineBatcher->colorVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(uint32) * lines->count, lines->colors, GL_DYNAMIC_DRAW);
+
+	glBindVertexArray(lineBatcher->VAO);
+
+	glDrawArrays(GL_LINES, 0, lines->count * 2);
+	glCheckError();
+
+	da_clear(lines->colors);
+	da_clear(lines->lineVertices);
+	lines->count = 0;
+}
 
 static void Geom_spritebatch_init(GeomSpritebatch* sb)
 {
@@ -398,6 +445,7 @@ void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 #endif
 	}
 
+	glCheckError();
 
 	{
 		// float* __restrict idsOut = vertexData->ids;
@@ -569,7 +617,6 @@ void Geom_renderBatch(Sprites* sprites, GeomSpritebatch* sb, mat4x4* cam)
 {
 	int count = sprites->count;
 	LightVertexData* vertexData = &sb->vertexData;
-	glCheckError();
 
 	shader_use(&sb->shader);
 	glUniformMatrix4fv(glGetUniformLocation(sb->shader.ID, "projection"), 1, GL_FALSE, (GLfloat*)cam);
@@ -610,7 +657,6 @@ void renderBatch(Sprites* sprites, SpriteBatch* sb, mat4x4* cam)
 	glBindBuffer(GL_ARRAY_BUFFER, sb->buffers[ROTATION]);
 	glBufferData(GL_ARRAY_BUFFER, count * sizeof(float) * 4, vertexData->rot, GL_DYNAMIC_DRAW);
 #endif
-	glCheckError();
 
 	shader_use(&sb->shader);
 	// shader_set_mat4(&sb->shader, "position", cam);
@@ -788,6 +834,8 @@ EXPORT INIT_GAME(initGraphics)
 		initSpriteBatch(&spriteBatch);
 
 		Geom_spritebatch_init(&geomSpriteBat);
+
+		initLineBatcher(&lineBatcher);
 	}
 }
 
@@ -1010,13 +1058,22 @@ EXPORT DRAW_GAME(drawGraphics)
 	updateCamera(&camera, &c->camera, &engine->windowDims);
 
 
-	// prepareBatch(&c->sprites, &spriteBatch);
 	static float counter = 0.f;
 	counter += 0.1f * engine->dt;
 	testSprites.positions[1].y = sin(counter) * 5.f;
 
-	// renderBatch(&c->sprites, &spriteBatch, &camera.cameraMatrix);
+	prepareBatch(&c->sprites, &spriteBatch);
+	renderBatch(&c->sprites, &spriteBatch, &camera.cameraMatrix);
 
-	geom_prepareBatch(&c->sprites, &geomSpriteBat);
-	Geom_renderBatch(&c->sprites, &geomSpriteBat, &camera.cameraMatrix);
+//	geom_prepareBatch(&c->sprites, &geomSpriteBat);
+//	Geom_renderBatch(&c->sprites, &geomSpriteBat, &camera.cameraMatrix);
+
+	Vec2 a = { 10.f, 20.f };
+	Vec2 g = { 10.f, 30.f };
+
+	drawLine(c, &a, &g, 0xFF00FFFF);
+
+	drawLine(c, &a, &g, 0xFF00FFFF);
+
+	renderLines(&lineBatcher, &c->lines, &camera.cameraMatrix);
 }

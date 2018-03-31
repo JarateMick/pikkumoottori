@@ -121,6 +121,7 @@ typedef struct
 
 	bool32 mouseDown;
 	Vec2 mousePos;
+	Vec2 mouseWorldPos;
 } Controller;
 
 typedef struct

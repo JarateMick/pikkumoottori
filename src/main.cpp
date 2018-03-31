@@ -5,6 +5,10 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 
+#define RF_DARRAY_IMPLEMENTATION
+#define RF_DARRAY_SHORT_NAMES
+#include <3rdparty/rf_darray.h>
+
 
 #ifndef __EMSCRIPTEN__
 #include <windows.h>
@@ -304,6 +308,7 @@ extern "C" int mainf()
 
 		Vec2 mousePos = convertScreenToWorld(&engine.context.camera, engine.controller.mousePos, &engine.windowDims);
 		ImGui::Text("Mouse (%f %f)", mousePos.x, mousePos.y);
+		engine.controller.mouseWorldPos = mousePos;
 
 #ifndef __EMSCRIPTEN__
 		ImGui::Render();

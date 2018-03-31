@@ -1,11 +1,17 @@
 #pragma once
 
+#define RF_DARRAY_IMPLEMENTATION
+#define RF_DARRAY_SHORT_NAMES
+#include <3rdparty/rf_darray.h>
+
 #include <math.h>
 #include "../platform.h"
 #include "graphicsF.h"
 #include "shader.c"
 
+
 #define MAX_SPRITES 800000
+
 typedef struct 
 {
 	float pos[MAX_SPRITES * 16];
@@ -45,6 +51,14 @@ typedef struct
 	Shader shader;
 	LightVertexData vertexData;
 } GeomSpritebatch;
+
+typedef struct
+{
+	uint32 VAO;
+	uint32 posVBO;
+	uint32 colorVBO;
+	Shader shader;
+} LineBatcher;
 
 typedef struct 
 {

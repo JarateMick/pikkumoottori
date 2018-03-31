@@ -19,6 +19,26 @@
 #define RADIUS 5.f
 #define SPEED 40.f
 
+static Texture2D* (*getTexture)(ResourceHolder* h, TextureEnum texture);
+
+static inline Vec2 V2(float x, float y)
+{
+	Vec2 result = { x, y };
+	return result;
+}
+
+static inline vec3 V3(float x, float y, float z)
+{
+	vec3 result = { x, y, z };
+	return result;
+}
+
+static inline vec4 V4(float x, float y, float z, float w)
+{
+	vec4 result = { x, y, z, w };
+	return result;
+}
+
 // hylkiminen
 typedef struct
 {
@@ -59,7 +79,9 @@ typedef struct
 	Particle* ptr;
 } ParticlePtr;
 
-typedef struct
+typedef struct GameState GameState;
+#include "../Physics.h"
+struct GameState
 {
 	Entitys ents;
 	Texture2D* testTextures[3];
@@ -67,8 +89,10 @@ typedef struct
 	Particle     particles[PARTICLE_COUNT];
 	ParticlePtr* particlesHash[GRID_SIZE];
 
+	PhysicsBodies bodies[100];
 	int count;
-} GameState;
+};
+#include "../Physics.c"
 
 // F = m*g
 // f = ma
@@ -96,23 +120,7 @@ typedef struct
 
 // 
 
-static inline Vec2 V2(float x, float y)
-{
-	Vec2 result = { x, y };
-	return result;
-}
 
-static inline vec3 V3(float x, float y, float z)
-{
-	vec3 result = { x, y, z };
-	return result;
-}
-
-static inline vec4 V4(float x, float y, float z, float w)
-{
-	vec4 result = { x, y, z, w };
-	return result;
-}
 
 static Vec2 randomVec2(int maxX, int maxY)
 {

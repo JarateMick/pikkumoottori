@@ -71,6 +71,13 @@ typedef struct
 	Texture2D* (*getTexture)(ResourceHolder* h, TextureEnum texture);
 } GraphicsFuncs;
 
+typedef struct
+{
+	Vec2* lineVertices;
+	uint32* colors;
+	int count;
+} Lines;
+
 /// hahaa
 typedef struct GraphicsContex
 {
@@ -82,7 +89,16 @@ typedef struct GraphicsContex
 
 	GraphicsFuncs funcs;
 	ResourceHolder resourceHolder;
+	Lines lines;
 } GraphicsContext;
+
+static void drawLine(GraphicsContext* c, Vec2* a, Vec2* b, uint32 color)
+{
+	da_push(c->lines.lineVertices, *a);
+	da_push(c->lines.lineVertices, *b);
+	da_push(c->lines.colors, color);
+	++(c->lines.count);
+}
 
 void zoom(CameraState* camera, float factor)
 {

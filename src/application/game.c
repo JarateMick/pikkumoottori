@@ -1,7 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS 1
 #include "game.h"
 
-static Texture2D* (*getTexture)(ResourceHolder* h, TextureEnum texture);
 void initWalls(GameState* state, Sprites* sprites, int texId, int start);
 
 EXPORT INIT_GAME(initGame)
@@ -98,6 +97,8 @@ EXPORT INIT_GAME(initGame)
 	}
 
 
+	testPhysicsBodies(state, c, 5);
+
 #endif
 }
 
@@ -146,6 +147,10 @@ EXPORT UPDATE_GAME(updateGame)
 	GameState* gameState = (GameState*)mem->memory;
 	Entitys* test = &gameState->ents;
 
+
+	getTexture = engine->context.funcs.getTexture; // TODO
+
+#if 0
 	if (engine->runToFrame > engine->currentFrame || engine->freeRun)
 	{
 
@@ -162,6 +167,12 @@ EXPORT UPDATE_GAME(updateGame)
 	{
 		gameState->ents.pos[i] = gameState->particles[i].position;
 	}
+#endif
+
+
+
+	
+	updateBodies(gameState, &engine->context, engine->controller.mouseWorldPos, engine->dt);
 
 #if 0
 
@@ -208,6 +219,8 @@ EXPORT DRAW_GAME(drawGame)
 	// ImGui::DragFloat2("bounds w, h", (&test->bounds.w));
 #endif
 
+
+	drawBodies(&engine->context ,gameState, 10);
 
 }
 
