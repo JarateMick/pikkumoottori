@@ -1,10 +1,11 @@
 #pragma once
 
+#include <math.h>
 #include "../platform.h"
 #include "graphicsF.h"
 #include "shader.c"
 
-#define MAX_SPRITES 300000
+#define MAX_SPRITES 800000
 typedef struct 
 {
 	float pos[MAX_SPRITES * 16];
@@ -25,6 +26,25 @@ typedef struct
 	VertexData vertexData;
 } SpriteBatch;
 
+typedef struct
+{
+	float pos[MAX_SPRITES];
+	float ids[MAX_SPRITES];
+	float rot[MAX_SPRITES];
+	unsigned int colors[MAX_SPRITES];
+	int textureSlots[32];
+	unsigned int slotCount;
+	unsigned int indicesCount;
+} LightVertexData;
+
+typedef struct
+{
+	uint32 VAO;
+	uint32 VBO;
+	unsigned int buffers[6];
+	Shader shader;
+	LightVertexData vertexData;
+} GeomSpritebatch;
 
 typedef struct 
 {

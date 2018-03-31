@@ -25,7 +25,7 @@ static Camera2D camera;
 #define INDEX 5
 #define MAX_TEXTURES 8
 
-void initSpriteBatch(SpriteBatch* sb)
+static void initSpriteBatch(SpriteBatch* sb)
 {
 	glGenVertexArrays(1, &sb->VAO);
 	glGenBuffers(ArrayCount(sb->buffers), sb->buffers);
@@ -80,6 +80,50 @@ void initSpriteBatch(SpriteBatch* sb)
 
 
 	sb->shader = shader_compile_from_file("assets/shaders/spriteVert.txt", "assets/shaders/spriteFrag.txt");
+
+	glCheckError();
+
+	shader_use(&sb->shader);
+	int values[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+	shader_set_ints(&sb->shader, "textures", 8, values);
+
+	glCheckError();
+}
+
+
+static void Geom_spritebatch_init(GeomSpritebatch* sb)
+{
+	glGenVertexArrays(1, &sb->VAO);
+	glGenBuffers(ArrayCount(sb->buffers), sb->buffers);
+
+	glBindVertexArray(sb->VAO);
+
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(3);
+
+	glBindBuffer(GL_ARRAY_BUFFER, sb->buffers[POS]);
+	glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0);
+	glBufferData(GL_ARRAY_BUFFER, MAX_SPRITES * sizeof(float) * 2, NULL, GL_DYNAMIC_DRAW); // 3 neliötä    4    pistettä            3     positionia      floatteina
+
+	glBindBuffer(GL_ARRAY_BUFFER, sb->buffers[B_ID]);
+	glVertexAttribPointer(1, 1, GL_FLOAT, false, 0, 0);
+	glBufferData(GL_ARRAY_BUFFER, MAX_SPRITES * sizeof(float), NULL, GL_DYNAMIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, sb->buffers[COLOR]);
+	glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+	glBufferData(GL_ARRAY_BUFFER, MAX_SPRITES * sizeof(unsigned int), NULL, GL_DYNAMIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, sb->buffers[ROTATION]);
+	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 0, 0);
+	glBufferData(GL_ARRAY_BUFFER, MAX_SPRITES * sizeof(float), NULL, GL_DYNAMIC_DRAW);
+
+	glBindVertexArray(0);
+
+	sb->shader = shader_compile_from_file_g("assets/shaders/geo_spriteVert.txt",
+		"assets/shaders/geo_spriteFrag.txt",
+		"assets/shaders/geo_spriteGeo.txt");
 
 	glCheckError();
 
@@ -413,6 +457,139 @@ void prepareBatch(Sprites* sprites, SpriteBatch* sb)
 	// END_TIMING2();
 }
 
+
+
+#undef NO_COPY
+#undef NO_MEMCPY
+#undef POS_SIZE  
+#undef UV_SIZE   
+#undef ID_SIZE   
+#undef COLOR_SIZE
+#undef ROT_SIZE  
+
+#define NO_COPY 1
+#define NO_MEMCPY 0
+#define POS_SIZE  sizeof(float) * 2 *  count
+#define UV_SIZE   sizeof(float) *    count
+#define ID_SIZE   sizeof(float) *    count
+#define COLOR_SIZE  sizeof(uint32) * count
+#define ROT_SIZE  sizeof(float)  *   count
+
+void geom_prepareBatch(Sprites* sprites, GeomSpritebatch* sb)
+
+{
+	int count = sprites->count;
+	LightVertexData* vertexData = &sb->vertexData;
+
+	{
+		Vec2* __restrict pos = sprites->positions;
+		Vec2* __restrict size = sprites->sizes;
+
+		float* __restrict angle = sprites->rotation;
+
+		float* positions = (float*)mapBufferRange(GL_ARRAY_BUFFER, sb->buffers[POS], POS_SIZE);
+		memcpy(positions, pos, POS_SIZE);
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+	}
+
+	{
+		vec4* __restrict color = sprites->colors;
+		unsigned int* colorOut = (unsigned int*)mapBufferRange(GL_ARRAY_BUFFER, sb->buffers[COLOR], COLOR_SIZE);
+
+		for (int i = 0; i < count; ++i)
+		{
+			int r = (int)(color->x * 255.0f);
+			int g = (int)(color->y * 255.0f);
+			int b = (int)(color->w * 255.0f);
+			int a = (int)(color->h * 255.0f);
+
+			unsigned int c = (a << 24 | b << 16 | g << 8 | r);
+			memcpy(colorOut + i, &c, sizeof(float));
+			++color;
+		}
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+	}
+
+	{
+		float* s_rots = sprites->rotation;
+
+		float* rot = (float*)mapBufferRange(GL_ARRAY_BUFFER, sb->buffers[ROTATION], ROT_SIZE);
+		memcpy(rot, s_rots, sizeof(float) * count);
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+	}
+
+	{
+		int* __restrict ids = sprites->ids;
+
+		float* idsOut = (float*)mapBufferRange(GL_ARRAY_BUFFER, sb->buffers[B_ID], ID_SIZE);
+
+		for (int i = 0; i < ArrayCount(vertexData->textureSlots); ++i)
+		{
+			vertexData->textureSlots[i] = -1;
+		}
+
+		vertexData->slotCount = 0;
+		for (int i = 0; i < count; ++i)
+		{
+			// get texture id
+			float ts;
+			bool32 found = false;
+			for (int i = 0; i < MAX_TEXTURES; i++)
+			{
+				if (vertexData->textureSlots[i] == *ids)
+				{
+					ts = (float)(i + 1);
+					found = true;
+					break;
+				}
+			}
+
+			if (!found)
+			{
+				vertexData->textureSlots[vertexData->slotCount] = *ids;
+				(vertexData->slotCount)++;
+				ts = (float)(vertexData->slotCount);
+			}
+
+			memcpy(idsOut + i + 0, &ts, sizeof(float));
+			++ids;
+		}
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+	}
+	glCheckError();
+}
+#undef NO_MEMCPY
+#undef POS_SIZE  
+#undef UV_SIZE   
+#undef ID_SIZE   
+#undef COLOR_SIZE
+#undef ROT_SIZE  
+
+void Geom_renderBatch(Sprites* sprites, GeomSpritebatch* sb, mat4x4* cam)
+{
+	int count = sprites->count;
+	LightVertexData* vertexData = &sb->vertexData;
+	glCheckError();
+
+	shader_use(&sb->shader);
+	glUniformMatrix4fv(glGetUniformLocation(sb->shader.ID, "projection"), 1, GL_FALSE, (GLfloat*)cam);
+
+	glBindVertexArray(sb->VAO);
+
+	for (int i = 0; i < MAX_TEXTURES; i++)
+	{
+		if (vertexData->textureSlots[i] == -1)
+			break;
+
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D, vertexData->textureSlots[i]);
+	}
+
+	// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sb->buffers[INDEX]);
+	// glPointSize(1.f);
+	glDrawArrays(GL_POINTS, 0, count);
+}
+
 void renderBatch(Sprites* sprites, SpriteBatch* sb, mat4x4* cam)
 {
 	int count = sprites->count;
@@ -567,6 +744,8 @@ static Texture2D* getTexture(ResourceHolder* h, TextureEnum texture)
 	return &h->textures[texture];
 }
 
+static GeomSpritebatch geomSpriteBat;
+
 void initCamera(Camera2D* cam, int screenW, int screenH);
 EXPORT INIT_GAME(initGraphics)
 {
@@ -588,8 +767,6 @@ EXPORT INIT_GAME(initGraphics)
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glClearColor(114.f / 255.0f, 144.f / 255.0f, 154.f / 255.0f, 1.0f);
 
-		// init sprite batch
-		initSpriteBatch(&spriteBatch);
 
 		//ImGui::StyleColorsClassic();
 		initCamera(&camera, (int)engine->windowDims.x, (int)engine->windowDims.y);
@@ -607,6 +784,10 @@ EXPORT INIT_GAME(initGraphics)
 
 		GraphicsFuncs* funcs = &c->funcs;
 		funcs->getTexture = getTexture;
+
+		initSpriteBatch(&spriteBatch);
+
+		Geom_spritebatch_init(&geomSpriteBat);
 	}
 }
 
@@ -650,9 +831,9 @@ EXPORT UPDATE_GAME(updateGraphics)
 		{
 			printf("failed to initaliaze GLAD\n");
 			ASSERT(false);
-		}	
+		}
 #endif
-		
+
 		glViewport(0, 0, engine->windowDims.x, engine->windowDims.y);
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -661,27 +842,27 @@ EXPORT UPDATE_GAME(updateGraphics)
 		initSpriteBatch(&spriteBatch);
 
 
-	/*	ResourceHolder* h = &c->resourceHolder;
-		int oldIds[Texture_count];
-		int newIds[Texture_count];
-		for (int i = 0; i < Texture_count; ++i)
-		{
-			if (h->loaded[i])
+		/*	ResourceHolder* h = &c->resourceHolder;
+			int oldIds[Texture_count];
+			int newIds[Texture_count];
+			for (int i = 0; i < Texture_count; ++i)
 			{
-				oldIds[i] = h->textures[i].ID;
-				h->loaded[i] = false;
-				newIds[i] = getTexture(h, (TextureEnum)i)->ID;
+				if (h->loaded[i])
+				{
+					oldIds[i] = h->textures[i].ID;
+					h->loaded[i] = false;
+					newIds[i] = getTexture(h, (TextureEnum)i)->ID;
+				}
 			}
-		}
 
-		for (int i = 0; i < c->sprites.count; ++i)
-		{
-			if (c->sprites.ids[i] >= 0 && c->sprites.ids[i] < Texture_count)
+			for (int i = 0; i < c->sprites.count; ++i)
 			{
-				int old = c->sprites.ids[i];
-				c->sprites.ids[i] = newIds[old];
-			}
-		}*/
+				if (c->sprites.ids[i] >= 0 && c->sprites.ids[i] < Texture_count)
+				{
+					int old = c->sprites.ids[i];
+					c->sprites.ids[i] = newIds[old];
+				}
+			}*/
 
 #if 0
 		GraphicsState* state = (GraphicsState*)mem->memory;
@@ -711,7 +892,7 @@ void updateCamera(Camera2D* cam, CameraState* state, Vec2* screen)
 	if (state->needUpdate)
 	{
 #if 1
-		
+
 		//glm::vec3 translate(-state->position.x + screen->x / 2, -state->position.y + screen->y / 2, 0.0f);  //centeroi cameran myösä
 		// cam->cameraMatrix = glm::translate(cam->orthoMatrix, translate);
 
@@ -725,12 +906,14 @@ void updateCamera(Camera2D* cam, CameraState* state, Vec2* screen)
 		// cam->cameraMatrix = /* rotate * */ glm::scale(glm::mat4(1.0f), scale) * cam->cameraMatrix;
 		//camera scale^^
 
-		mat4x4 scl;
-		mat4x4_identity(scl);
-		mat4x4_scale(scl, scl, state->scale);
-		mat4x4_mul(trans, trans, scl);
+		// mat4x4 scl;
+		// mat4x4_identity(scl);
+		// mat4x4_scale(scl, scl, state->scale);
+		// mat4x4_mul(trans, scl, trans);
 
-		mat4x4_dup(cam->cameraMatrix, trans);//cam->orthoMatrix);
+		mat4x4_scale(cam->cameraMatrix, trans, state->scale);
+
+		// mat4x4_dup(cam->cameraMatrix, trans);//cam->orthoMatrix);
 		state->needUpdate = false;
 #endif
 	}
@@ -775,17 +958,65 @@ EXPORT DRAW_GAME(drawGraphics)
 	}
 	if (controller->cameraMovement[q])
 	{
-		zoom(&c->camera, 0.33f * engine->dt);
+		zoom(&c->camera, 15.33f * engine->dt);
 	}
 	if (controller->cameraMovement[e])
 	{
-		zoom(&c->camera, -0.33f * engine->dt);
+		zoom(&c->camera, -15.33f * engine->dt);
 	}
 	if (vel.x != 0.f || vel.y != 0)
 		translate(&c->camera, &vel);
 
-	prepareBatch(&c->sprites, &spriteBatch);
+
+	// prepareBatch(&c->sprites, &spriteBatch);
+	static Sprites testSprites;
+	static int init = false;
+	if (!init)
+	{
+#define INIT_ARRAY(arr, type, count) static type arr[count];
+
+#define TEST_COUNT 600000
+		static Vec2 p[TEST_COUNT];
+		static Vec2 s[TEST_COUNT];
+		static vec4 co[TEST_COUNT];
+		static int ids[TEST_COUNT];
+		static float rot[TEST_COUNT];
+		static int count = TEST_COUNT;
+		Texture2D* texID = getTexture(&c->resourceHolder, Texture_awesomeface);
+
+		// static Texture2D* getTexture(ResourceHolder* h, TextureEnum texture)
+
+		for (int i = 0; i < TEST_COUNT; ++i)
+		{
+			p[i].x = i * 3.f;
+			co[i].x = 1.f;
+			co[i].y = 1.f;
+			co[i].w = 1.f;
+			co[i].h = 1.f;
+			ids[i] = texID->ID;
+			rot[i] = 0.f;
+		}
+
+		testSprites.positions = p;
+		testSprites.sizes = s;
+		testSprites.colors = co;
+		testSprites.ids = ids;
+		testSprites.rotation = rot;
+		testSprites.count = TEST_COUNT;
+	}
+
+	// c->sprites = testSprites;
 
 	updateCamera(&camera, &c->camera, &engine->windowDims);
-	renderBatch(&c->sprites, &spriteBatch, &camera.cameraMatrix);
+
+
+	// prepareBatch(&c->sprites, &spriteBatch);
+	static float counter = 0.f;
+	counter += 0.1f * engine->dt;
+	testSprites.positions[1].y = sin(counter) * 5.f;
+
+	// renderBatch(&c->sprites, &spriteBatch, &camera.cameraMatrix);
+
+	geom_prepareBatch(&c->sprites, &geomSpriteBat);
+	Geom_renderBatch(&c->sprites, &geomSpriteBat, &camera.cameraMatrix);
 }

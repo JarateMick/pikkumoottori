@@ -36,10 +36,31 @@ Shader shader_compile_from_file(const char* vertexFilepath, const char* fragment
 	vertexCode   = io_read_file(vertexFilepath);
 	fragmentCode = io_read_file(fragmentFilepath);
 
-	return shader_compile_shaders_from_source(vertexCode, fragmentCode, vertexFilepath, fragmentFilepath);
+	Shader result =  shader_compile_shaders_from_source(vertexCode, fragmentCode, vertexFilepath, fragmentFilepath);
 
 	free(vertexCode);
 	free(fragmentCode);
+
+	return result;
+}
+
+Shader shader_compile_from_file_g(const char* vertexFilepath, const char* fragmentFilepath, const char* geoShader)
+{
+	char* vertexCode;
+	char* fragmentCode;
+	char* geosrc;
+
+	vertexCode   = io_read_file(vertexFilepath);
+	fragmentCode = io_read_file(fragmentFilepath);
+	geosrc = io_read_file(geoShader);
+
+	Shader value = shader_compile_shaders_from_source_g(vertexCode, fragmentCode, vertexFilepath, fragmentFilepath, geosrc);
+
+	free(vertexCode);
+	free(fragmentCode);
+	free(geosrc);
+
+	return value;
 }
 
 void shader_set_ints(Shader* shader, const char* name, int count, int* values)

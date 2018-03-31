@@ -306,7 +306,7 @@ extern "C" int mainf()
 		float ftSeconds = (ft / 1000.f);
 		engine.dt = ftSeconds;
 
-		LOGI("DT: %f \n", engine.dt);
+		// LOGI("DT: %f \n", engine.dt);
 //		LOGI("STILL ALIVE\n");
 	};
 

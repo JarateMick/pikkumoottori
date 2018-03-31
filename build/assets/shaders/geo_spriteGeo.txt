@@ -1,0 +1,63 @@
+#version 430 core
+
+layout (points) in;
+layout (triangle_strip, max_vertices = 4) out;
+
+in VS_OUT {
+    vec4 color;
+	float rot;
+} gs_in[]; 
+
+layout (location = 0) out vec2 outUv;
+layout (location = 1) out vec4 outColor;
+
+
+uniform mat4 projection;
+
+const vec2 screenDims = vec2(1024, 860);
+
+void buildVertices(vec4 position)
+{
+	float u0 = 0.0; float u1 = 1.0;
+	float v0 = 0.0; float v1 = 1.0;
+	
+	// type 
+	// size
+	
+	// vec2 pos = (gl_in[0].gl_Position.xy + vec2(1.0)) * 0.5;
+	vec4 p = vec4(gl_in[0].gl_Position.xy, 0, 1.0);
+	//vec4(pos * screenDims, 0.0, 1.0);
+	
+
+	float rot = gs_in[0].rot;
+	rot = 3.14 / 2;
+	mat2 rot_mat = mat2(cos(rot), -sin(rot), sin(rot), cos(rot));
+	float size = 10.0 / 2.0;
+	
+	// ortho * (P * vec4(rot_mat * vec(size, size)));
+  
+    gl_Position = projection * (p + (vec4(rot_mat * vec2(-size, -size), 0.0, 0.0)));    // 1:bottom-left   
+	outUv = vec2(u0, v0);
+	outColor = gs_in[0].color;
+	EmitVertex();   
+	
+	gl_Position = projection * (p + (vec4(rot_mat * vec2(size, -size), 0.0, 0.0)));    // 2:bottom-right
+	outUv = vec2(u0, v1);
+	outColor = gs_in[0].color;
+	EmitVertex();
+	
+	gl_Position = projection * (p + (vec4(rot_mat * vec2(-size, size), 0.0, 0.0)));    // 3:top-left
+	outUv = vec2(u1, v0);
+	outColor = gs_in[0].color;
+	EmitVertex();
+	
+	gl_Position = projection * (p + (vec4(rot_mat * vec2(size, size), 0.0, 0.0)));    // 4:top-right
+	outUv = vec2(u1, v1);
+	outColor = gs_in[0].color;
+	EmitVertex();
+}
+
+void main() {    
+	
+	 buildVertices(gl_in[0].gl_Position);
+}  

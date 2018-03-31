@@ -210,15 +210,15 @@ Mat4 mat4_identy()
 
 void mat4_translate(Mat4* t, Vec3* v)
 {
-	t->values[3]  += v->x;
-	t->values[7]  += v->y;
+	t->values[3] += v->x;
+	t->values[7] += v->y;
 	t->values[11] += v->z;
 }
 
 void mat4_translate_dest(Mat4* right, Vec3* left, Mat4* dest)
 {
-	dest->values[3]  = right->values[3] + left->x;
-	dest->values[7]  = right->values[7] + left->y;
+	dest->values[3] = right->values[3] + left->x;
+	dest->values[7] = right->values[7] + left->y;
 	dest->values[11] = right->values[11] + left->z;
 }
 
@@ -235,10 +235,111 @@ void mat4_multiply_m(Mat4* right, Mat4* left)
 }
 
 
+#include <stdint.h>
+typedef uint32_t uint32;
+typedef uint8_t uint8;
 
+#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
+#define BYTE_TO_BINARY(byte)  \
+  (byte & 0x80 ? '1' : '0'), \
+  (byte & 0x40 ? '1' : '0'), \
+  (byte & 0x20 ? '1' : '0'), \
+  (byte & 0x10 ? '1' : '0'), \
+  (byte & 0x08 ? '1' : '0'), \
+  (byte & 0x04 ? '1' : '0'), \
+  (byte & 0x02 ? '1' : '0'), \
+  (byte & 0x01 ? '1' : '0') 
+
+void printBinary(uint8 byte)
+{
+	printf(" " BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(byte));
+}
 
 int main()
 {
+
+
+	{
+		uint8 x = 0b0101100;
+		uint8 a = x & (x - 1);
+
+		printf(" x & (x - 1) ");
+		printBinary(x);
+		printBinary(a);
+
+		// 0 if zero
+		// also determine if is power of two by folliwing with zero test
+
+		printf("is power of 2 %i ", x & (x - 1) == 0);
+
+		x = 0b00010000;
+		a = x & (x - 1);
+		printf("is power of 2 %i ", (x & (x - 1)) == 0);
+	}
+	puts("");
+	
+	{
+		// all 1 if none	
+		// turn on the most rightmost 0-bit
+		uint8 x = 0b01100111;
+		uint8 a = x | (x + 1);
+
+		printf(" x | (x + 1) ");
+		printBinary(x);
+		printBinary(a);
+	}
+	puts("");
+
+	{
+		// turn off trailing one's
+		uint8 x = 0b01100111;
+		uint8 a = x & (x + 1);
+
+		printf(" x & (x + 1) ");
+		printBinary(x);
+		printBinary(a);
+
+		// also can determine if 
+		// integer is teh form 2n - 1
+		// 0 or all 1's aply teh formula followed by 0-test
+	}
+	puts("");
+
+	{
+		// turn on trailing zero's
+		uint8 x = 0b01100000;
+		uint8 a = x | (x - 1);
+
+		printf(" x & (x + 1) ");
+		printBinary(x);
+		printBinary(a);
+	}
+
+	{
+		// create word with a single 1-bit at the position off the rightmost 0-bit in x
+		uint8 x = 0b01100000;
+		uint8 a = -x & (x + 1);
+
+		printf(" x & (x + 1) ");
+		printBinary(x);
+		printBinary(a);
+
+
+		// same for 
+		uint8 x = 0b01100000;
+		uint8 a = -x | (x - 1);
+	}
+
+
+	getchar();
+
+
+
+
+
+
+
+	return 0;
 	vec lol;
 	lol[0] = 10;
 	lol[1] = 20;

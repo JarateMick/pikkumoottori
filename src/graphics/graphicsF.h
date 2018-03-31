@@ -91,6 +91,7 @@ void zoom(CameraState* camera, float factor)
 	if (camera->scale < 0.01f)
 		camera->scale = 0.02f;
 
+	printf("%f\n", camera->scale);
 }
 
 void translate(CameraState* camera, Vec2* position)

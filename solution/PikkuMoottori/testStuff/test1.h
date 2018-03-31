@@ -11,7 +11,7 @@ typedef struct
 } Hahaa;
 
 #elif defined(TEST2)
-typedef struct 
+typedef struct
 {
 	void* data;
 } Hahaa;
@@ -24,10 +24,16 @@ typedef struct
 #endif
 
 
+
 static void initAll()
 {
 	Hahaa* h = 0;
 	Internal* a = 0;
 
-	internal_initialize(a, h);
-}	
+	 internal_initialize(a, h);
+
+
+	// Turn off the rightmost bit
+	getchar();
+	return 0;
+}

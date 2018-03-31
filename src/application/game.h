@@ -13,7 +13,7 @@
 #include "../platform.h"
 
 #define WALL_COLLISION_E 0.5f
-#define PARTICLE_COUNT 100
+#define PARTICLE_COUNT 800000
 // #define GRAVITY -9.81f / 2.f
 #define GRAVITY 12000*-9.8f
 #define RADIUS 5.f
@@ -21,6 +21,9 @@
 
 
 // hylkiminen
+// #ifdef 0
+
+// #endif
 
 typedef struct
 {
@@ -33,8 +36,8 @@ typedef struct
 	float pressure;
 } Particle;
 
-#define BENCH_COUNT 3000
-#define ENTS_COUNT 100000
+#define BENCH_COUNT 800000
+#define ENTS_COUNT 800009
 typedef struct
 {
 	Vec2 pos[ENTS_COUNT];
@@ -391,8 +394,8 @@ void calculateForces(Particle* particles, int count)
 		if (first)
 		{
 			first = false;
-			printf("f: %f %f  fpress: %f %f     fvisc %f %f \n", a->acceleration.x, a->acceleration.y,
-				fpress.x, fpress.y, fvisc.x, fvisc.y);
+			//printf("f: %f %f  fpress: %f %f     fvisc %f %f \n", a->acceleration.x, a->acceleration.y,
+			//	fpress.x, fpress.y, fvisc.x, fvisc.y);
 		}
 	}
 }

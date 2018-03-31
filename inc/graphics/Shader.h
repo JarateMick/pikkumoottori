@@ -57,6 +57,44 @@ Shader shader_compile_shaders_from_source(const char * vertexSrc, const char * f
 	return result;
 }
 
+Shader shader_compile_shaders_from_source_g(const char * vertexSrc, const char * fragmentSrc,
+	const char* vertexName, const char* fragmentName, const char* geoSrc)
+{
+	Shader result;
+	unsigned int vertex, fragment, geo;
+
+	vertex = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertex, 1, &vertexSrc, NULL);
+	glCompileShader(vertex);
+	checkCompileErrors(vertex, "VERTEX", vertexName);
+
+	// fragment Shader
+	fragment = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragment, 1, &fragmentSrc, NULL);
+	glCompileShader(fragment);
+	checkCompileErrors(fragment, "FRAGMENT", fragmentName);
+
+	geo = glCreateShader(GL_GEOMETRY_SHADER);
+	glShaderSource(geo, 1, &geoSrc, NULL);
+	glCompileShader(geo);
+	checkCompileErrors(geo, "GEO", fragmentName);
+
+	// shader Program
+	result.ID = glCreateProgram();
+	glAttachShader(result.ID, vertex);
+	glAttachShader(result.ID, fragment);
+	glAttachShader(result.ID, geo);
+	glLinkProgram(result.ID);
+	checkCompileErrors(result.ID, "PROGRAM", fragmentName);
+
+	// delete the shaders as they're linked into our program now and no longer necessary
+	glDeleteShader(vertex);
+	glDeleteShader(fragment);
+	glDeleteShader(geo);
+
+	return result;
+}
+
 Shader shader_compile_shader_from_file(const char* vertexFilepath, const char* fragmentFilepath);
 void shader_set_ints(Shader* shader, const char* name, int count, int* values);
 void shader_set_mat4(Shader* shader, const char* name, mat4* value);

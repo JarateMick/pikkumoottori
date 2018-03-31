@@ -153,6 +153,7 @@ EXPORT UPDATE_GAME(updateGame)
 
 	// hashParticles(gameState, gameState->particles);
 
+#if 0
 	updateParticles(gameState->particles, gameState->count, engine->dt);
 	// doParticleCollision(gameState, engine->dt);
 
@@ -161,9 +162,9 @@ EXPORT UPDATE_GAME(updateGame)
 		gameState->ents.pos[i] = gameState->particles[i].position;
 	}
 	
+#endif
 
-#if 0
-
+#if 1
 	float unitSpeed = 100 * engine->dt;
 	for (int i = 0; i < BENCH_COUNT; ++i)
 	{
