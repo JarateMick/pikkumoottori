@@ -132,6 +132,11 @@ typedef struct
 
 	bool32 reloadGraphics;
 	Vec2 windowDims;
+
+	int runToFrame;
+	int currentFrame;
+	float simulationAdditionalDt;
+	int freeRun;
 } EngineContext;
 
 typedef struct

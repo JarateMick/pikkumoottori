@@ -13,18 +13,13 @@
 #include "../platform.h"
 
 #define WALL_COLLISION_E 0.5f
-#define PARTICLE_COUNT 800000
+#define PARTICLE_COUNT 500
 // #define GRAVITY -9.81f / 2.f
 #define GRAVITY 12000*-9.8f
 #define RADIUS 5.f
 #define SPEED 40.f
 
-
 // hylkiminen
-// #ifdef 0
-
-// #endif
-
 typedef struct
 {
 	Vec2  position;
@@ -36,8 +31,8 @@ typedef struct
 	float pressure;
 } Particle;
 
-#define BENCH_COUNT 800000
-#define ENTS_COUNT 800009
+#define BENCH_COUNT 3000
+#define ENTS_COUNT 100000
 typedef struct
 {
 	Vec2 pos[ENTS_COUNT];
@@ -127,18 +122,12 @@ static Vec2 randomVec2(int maxX, int maxY)
 void initializeParticles(Particle* particles, int count)
 {
 #if 0
-	for (int i = 0; i < count; ++i)
-	{
-		particles[i].mass = 1.f;
-		particles[i].position = randomVec2(800, 800);
-		particles[i].velocity = V2(0, 0); //randomVec2(0, 0);
-	}
 #else
 
 	for (int i = 0; i < count; ++i)
 	{
 		particles[i].mass = 1.f;
-		particles[i].position = randomVec2(800, 800);
+		particles[i].position = V2(i * 2.f, i * RADIUS * 2); // randomVec2(800, 800);
 		particles[i].velocity = V2(0, 0); //randomVec2(0, 0);
 	}
 #endif
@@ -347,8 +336,11 @@ void calculateForces(Particle* particles, int count)
 		Vec2 fvisc = { 0.f, 0.f };
 
 		Particle* a = particles + i;
-		for (int j = i + 1; j < count; ++j)
+		for (int j = 0; j < count; ++j)
 		{
+			if (i == j)
+				continue;
+
 			Particle* b = particles + j;
 			Vec2 distVec = vec2_subv(&a->position, &b->position);
 			float len = vec2_len(&distVec);
@@ -365,9 +357,11 @@ void calculateForces(Particle* particles, int count)
 				// float divider = (2.f * b->density) * SPIKY_GRAD * pow(H - len, 2.f);
 
 				// force contribution
-				distVec = vec2_mul(&distVec, MASS * (a->pressure + b->pressure));
-				distVec = vec2_div(&distVec, (2.f * b->density));
-				distVec = vec2_mul(&distVec, SPIKY_GRAD * pow(H - len, 2.f));
+
+
+				vec2_mul_s(&distVec, &distVec, MASS * (a->pressure + b->pressure));
+				vec2_div_s(&distVec, &distVec, (2.f * b->density));
+				vec2_mul_s(&distVec, &distVec, SPIKY_GRAD * pow(H - len, 2.f));
 
 				vec2_add_v(&fpress, &fpress, &distVec);
 
@@ -376,9 +370,9 @@ void calculateForces(Particle* particles, int count)
 				vec2 velDist;
 				vec2_sub_v(&velDist, &b->velocity, &a->velocity);
 
-				velDist = vec2_mul(&velDist, VISC * MASS);
-				velDist = vec2_div(&velDist, b->density);
-				velDist = vec2_mul(&velDist, VISC_LAP * (H - len));
+				vec2_mul_s(&velDist, &velDist, VISC * MASS);
+				vec2_div_s(&velDist, &velDist, b->density);
+				vec2_mul_s(&velDist, &velDist, VISC_LAP * (H - len));
 
 
 				vec2_add_v(&fvisc, &fvisc, &velDist);
@@ -394,8 +388,8 @@ void calculateForces(Particle* particles, int count)
 		if (first)
 		{
 			first = false;
-			//printf("f: %f %f  fpress: %f %f     fvisc %f %f \n", a->acceleration.x, a->acceleration.y,
-			//	fpress.x, fpress.y, fvisc.x, fvisc.y);
+			 printf("f: %f %f  fpress: %f %f     fvisc %f %f \n", a->acceleration.x, a->acceleration.y,
+				 fpress.x, fpress.y, fvisc.x, fvisc.y);
 		}
 	}
 }
@@ -403,6 +397,10 @@ void calculateForces(Particle* particles, int count)
 
 void updateParticles(Particle* particles, int count, float dt)
 {
+	
+	// vec2 c = { 10.f, 10.f };
+// #include "../test123.h"
+
 
 	computeDensityPressure(particles, count);
 	calculateForces(particles, count);
@@ -416,7 +414,7 @@ void updateParticles(Particle* particles, int count, float dt)
 		// float accY = forceY / m;
 		// particles[i].velocity.y = particles[i].velocity.y + accY;
 
-		dt = 0.0008f;
+		dt =  dt * 0.5f;
 
 		particles[i].acceleration = vec2_mul(&particles[i].acceleration, dt);
 		particles[i].acceleration = vec2_div(&particles[i].acceleration, particles[i].density);
@@ -443,9 +441,7 @@ void updateParticles(Particle* particles, int count, float dt)
 			particles[i].position.y = particles[i].position.y < bounds.y ? bounds.y : bounds.h - 1.f;
 		}
 	}
-
 }
-
 
 EXPORT INIT_GAME(initGame);
 EXPORT UPDATE_GAME(updateGame);

@@ -1,11 +1,8 @@
 #define _CRT_SECURE_NO_WARNINGS 1
 #include "game.h"
 
-
 static Texture2D* (*getTexture)(ResourceHolder* h, TextureEnum texture);
-void initWalls(GameState* state, Sprites* sprites, int texId,  int start);
-
-
+void initWalls(GameState* state, Sprites* sprites, int texId, int start);
 
 EXPORT INIT_GAME(initGame)
 {
@@ -146,25 +143,28 @@ EXPORT UPDATE_GAME(updateGame)
 {
 	// GraphicsContext* c = &engine->context;
 	// auto sprites = c->sprites;
-
 	GameState* gameState = (GameState*)mem->memory;
 	Entitys* test = &gameState->ents;
 
+	if (engine->runToFrame > engine->currentFrame || engine->freeRun)
+	{
 
-	// hashParticles(gameState, gameState->particles);
+		// hashParticles(gameState, gameState->particles);
+		updateParticles(gameState->particles, gameState->count, engine->dt);
+		// doParticleCollision(gameState, engine->dt);
 
-#if 0
-	updateParticles(gameState->particles, gameState->count, engine->dt);
-	// doParticleCollision(gameState, engine->dt);
+		// hacks
 
-	for (int i = 0; i < 1000; ++i)
+		++engine->currentFrame;
+	}
+
+	for (int i = 0; i < PARTICLE_COUNT; ++i)
 	{
 		gameState->ents.pos[i] = gameState->particles[i].position;
 	}
-	
-#endif
 
-#if 1
+#if 0
+
 	float unitSpeed = 100 * engine->dt;
 	for (int i = 0; i < BENCH_COUNT; ++i)
 	{
