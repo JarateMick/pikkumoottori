@@ -142,8 +142,6 @@ static bool loadGameDll(ApplicationFunctions* app, const char* dllName)
 				}
 
 				app->lastWriteTime = getWriteTime(buffer);
-				
-			
 			}
 			return true;
 	}

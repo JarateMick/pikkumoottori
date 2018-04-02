@@ -172,7 +172,7 @@ EXPORT UPDATE_GAME(updateGame)
 
 
 	
-	updateBodies(gameState, &engine->context, engine->controller.mouseWorldPos, engine->dt);
+	updateBodies(engine, gameState, &engine->context, engine->controller.mouseWorldPos, engine->dt);
 
 #if 0
 
@@ -222,6 +222,18 @@ EXPORT DRAW_GAME(drawGame)
 
 	drawBodies(&engine->context ,gameState, 10);
 
+	if (isKeyDown(engine, Key_1))
+	{
+		printf("key_1\n");
+	}
+	if (isKeyPressed(engine, Key_2))
+	{
+		printf("key_2\n");
+	}
+	if (isKeyPressed(engine, Key_G))
+	{
+		printf("key_G\n");
+	}
 }
 
 

@@ -90,6 +90,7 @@ struct GameState
 	ParticlePtr* particlesHash[GRID_SIZE];
 
 	PhysicsBodies bodies[100];
+	PhysicsController physicsControls;
 	int count;
 };
 #include "../Physics.c"

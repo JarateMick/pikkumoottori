@@ -2,8 +2,9 @@
 
 // vector 2 
 
+typedef struct Vec2 Vec2;
 
-typedef struct
+struct Vec2
 {
 	float x;
 	float y;
@@ -31,7 +32,7 @@ typedef struct
 	//ignore void normalizeInPlace();
 	//ignore void safeNormalizeInPlace();
 	//ignore Vec2 normalize();
-} Vec2;
+};
 typedef Vec2 vec2;
 
 static inline Vec2 vec2_subv(Vec2* a, Vec2* b)
@@ -59,6 +60,12 @@ static inline Vec2 vec2_add(Vec2* a, float s)
 }
 
 static inline void vec2_add_s(Vec2* dest, Vec2* right,  float s)
+{
+	dest->x = right->x + s;
+	dest->y = right->y + s;
+}
+
+static inline void vec2_sub_s(Vec2* dest, Vec2* right,  float s)
 {
 	dest->x = right->x + s;
 	dest->y = right->y + s;
@@ -118,6 +125,7 @@ static inline void vec2_add_v(Vec2* dest, Vec2* r, Vec2* l)
 }
 
 static inline void vec2_add_vs(Vec2* dest, vec2* r, vec2* l, int c)
+
 {
 	for (int i = 0; i < c; ++i)
 	{

@@ -120,9 +120,77 @@ typedef struct
 	bool32 cameraMovement[size];
 
 	bool32 mouseDown;
+	bool32 mouseLastFrame;
 	Vec2 mousePos;
 	Vec2 mouseWorldPos;
+
+	int32 buttons;
+	int32 lastFrame;
+	int32 mouseWheel;
 } Controller;
+
+
+// Scancode_A - 4 == Key_A
+
+// 0123
+// 0000 
+
+enum keys_enum
+{
+	Key_A,
+	Key_B,
+	Key_C,
+	Key_D,
+	Key_E,
+	Key_F,
+	Key_G,
+	Key_H,
+	Key_I,
+	Key_J,
+	Key_K,
+	Key_L,
+	Key_M,
+	Key_N,
+	Key_O,
+	Key_P,
+	Key_Q,
+	Key_R,
+	Key_S,
+	Key_T,
+	Key_U,
+	Key_V,
+	Key_W,
+	Key_X,
+	Key_Y,
+	Key_Z,
+
+	Key_1,
+	Key_2,
+	Key_3,
+	Key_4,
+	Key_5,
+	Key_6,
+	Key_7,
+	Key_MAX,
+};
+
+
+// toggle: number ^= 1&UL << x;
+static void controller_pressKey(Controller* c, uint32 key)
+{
+	c->buttons |= 1UL << key;
+}
+static void controller_unpressKey(Controller* c, uint32 key)
+{
+	c->buttons &= ~(1UL << key);
+}
+
+static void controller_updateKeys(Controller* c)
+{
+	c->lastFrame = c->buttons;
+	c->mouseWheel = 0;
+	c->mouseLastFrame = c->mouseDown;
+}
 
 typedef struct
 {
@@ -139,6 +207,23 @@ typedef struct
 	float simulationAdditionalDt;
 	int freeRun;
 } EngineContext;
+
+static bool32 isKeyDown(EngineContext* e, uint32 key)
+{
+	return ((e->controller.buttons >> key) & 1U) == 1;
+}
+static bool32 isKeyPressed(EngineContext* e, uint32 key)
+{
+	bool32 thisFrame = (e->controller.buttons   >> key) & 1U;
+	bool32 lastFrame = (e->controller.lastFrame >> key) & 1U;
+	return thisFrame && !lastFrame;
+}
+
+static bool32 isMousePressed(EngineContext* e, uint32 key)
+{
+	return (e->controller.mouseDown) && !e->controller.mouseLastFrame;
+}
+
 
 typedef struct
 {

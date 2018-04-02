@@ -225,6 +225,12 @@ extern "C" int mainf()
 			{
 				engine.controller.mouseDown = false;
 			} break;
+			case SDL_MOUSEWHEEL: 
+			{
+				// pMouseWheelScrolled = true;
+//				pMouseWheel.x = e.wheel.x;
+				engine.controller.mouseWheel = e.wheel.y;
+			} break;
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
 			{
@@ -249,7 +255,23 @@ extern "C" int mainf()
 				default:
 					break;
 				}
-			}
+
+
+				// Real scancode >|
+				SDL_Scancode scancode = e.key.keysym.scancode;
+
+				const int sdl_to_pikkumoottori = 4;
+				int code = scancode - sdl_to_pikkumoottori;
+
+				if (code >= 0 && code < keys_enum::Key_MAX)
+				{
+					if (down)
+						controller_pressKey(&engine.controller, code);
+					else
+						controller_unpressKey(&engine.controller, code);
+				}
+
+			} break;
 			default:
 				break;
 			}
@@ -306,6 +328,9 @@ extern "C" int mainf()
 		callRender(&engine, &app);
 		callRender(&engine, &graphics);
 
+		controller_updateKeys(&engine.controller);
+
+
 		Vec2 mousePos = convertScreenToWorld(&engine.context.camera, engine.controller.mousePos, &engine.windowDims);
 		ImGui::Text("Mouse (%f %f)", mousePos.x, mousePos.y);
 		engine.controller.mouseWorldPos = mousePos;
@@ -335,5 +360,5 @@ extern "C" int mainf()
 #endif
 
 	return 0;
-}
+	}
 
