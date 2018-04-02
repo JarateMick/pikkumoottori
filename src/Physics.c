@@ -404,11 +404,12 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 		float velAlongNormal = dotProduct(&rv, &dist);
 
 		// do not resolve if velocities are separating
-		if (velAlongNormal < 0)
+
+		if (velAlongNormal > 0)
 			goto skip;
 
 		// calculate restitution
-		float e = 1.f; // min(restA, restB);
+		float e = 1.0f; // min(restA, restB);
 
 		// calculate impulse scalar 
 		float mass1 = 1.f, mass2 = 1.f;
@@ -434,7 +435,7 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 		const float inertia = 1.f / 6.f;
 		float aaa = pos->x * imp1.y - pos->y * imp1.x;
 		float bbb = pos->x * imp2.y - pos->y * imp2.x;
-		bs->angularVel[bodyA] += inertia * aaa;
+		bs->angularVel[bodyA] -= inertia * aaa;
 		bs->angularVel[bodyB] += inertia * bbb;
 	skip:
 		int a;
@@ -615,7 +616,6 @@ static inline void physics_rotateSelected(GameState* state, float rotation)
 	}
 }
 
-
 static void physics_onControl(EngineContext* c, GameState* state, float dt)
 {
 	int mouseWheel = c->controller.mouseWheel;
@@ -633,7 +633,7 @@ static void physics_onControl(EngineContext* c, GameState* state, float dt)
 	PhysicsBodies* bodies = state->bodies;
 	if (isMousePressed(c, 0))
 	{
-		printf("pressered \n");
+		// printf("pressered \n");
 
 		for (int i = 0; i < bodies->count; ++i)
 		{
@@ -717,7 +717,7 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 			bs->acc[i].y = 0.f;
 			bs->vel[i].y = 0.f;
 		}
-}
+	}
 #endif
 
 	{ // Controls
@@ -826,8 +826,8 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 		{
 			if (polygonIntersection(bs, ii, jj, &outNormal, &outId))
 			{
-				debug_collides[ii] = 1;
-				debug_collides[jj] = 1;
+				// debug_collides[ii] = 1;
+				// debug_collides[jj] = 1;
 
 				int i = outId == ii ? ii : jj;
 				int j = outId == ii ? jj : ii;
@@ -841,12 +841,14 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 
 				for (int vertexIndex = 0; vertexIndex < 4; ++vertexIndex) // joka vertex
 				{
-					int collides = pointInsideRectangle(vp + outId + 0, vp + outId + 1, vp + outId + 2,
-						vp + outId + 3, vp + other + vertexIndex);
+					int collides = pointInsideRectangle(vp + (outId*4) + 0, vp + (outId*4) + 1,
+						vp + (outId*4) + 2,
+						vp + (outId*4) + 3, vp + (other*4) + vertexIndex);
 
 					if (collides)
 					{
-						collIndex = other + vertexIndex;
+						collIndex = (other*4) + vertexIndex;
+						printf("::: %i \n", collIndex);
 						break;
 					}
 				}
@@ -856,10 +858,33 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 
 				// printf("and the out id is %i", outId);
 				// printf("%i %i %i", i, j, collIndex);
-				physics_handleCollision_2(bs, collIndex, ii, jj, &outNormal);
+				physics_handleCollision_2(bs, collIndex, jj, ii, &outNormal);
 			}
 		}
 	}
+
+
+	int other = 1;
+	outId = 0;
+	Vec2* vp = bs->verticesPositions;
+	for (int vertexIndex = 0; vertexIndex < 4; ++vertexIndex) // joka vertex
+	{
+		int collides = pointInsideRectangle(vp + (outId*4) + 0, vp + (outId*4) + 1, vp + (outId*4) + 2,
+			vp + (outId*4) + 3, vp + (other*4) + vertexIndex);
+
+		if (collides)
+		{
+			int collIndex = (other*4) + vertexIndex;
+			printf("::: %i \n", collIndex);
+			debug_collides[outId] = 1;
+			// debug_collides[jj] = 1;
+			from = *(vp + collIndex);
+			drawThisVec = V2(1.f, 1.f);
+			drawThisVec = vec2_addv(&from, &drawThisVec);
+			break;
+		}
+	}
+
 
 #if 0
 	// box vs box collision
@@ -903,7 +928,7 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 					physics_handleCollision(bs, coll, jIndex / 4, iIndex / 4);
 					debug_collides[jIndex / 4] = 1;
 					break;
-			}
+}
 		}
 #endif
 		skip_coll:
@@ -1074,6 +1099,8 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 
 
 
+	bs->angularVel[4] = 0.f;
+	bs->rot[4] = 0.f;
 	bs->acc[4] = V2(0.f, 0.f);
 	// move
 	vec2_add_vs(bs->vel, bs->vel, bs->acc, bs->count);
@@ -1138,6 +1165,9 @@ static void drawBodies(GraphicsContext* c, GameState* state, int count)
 
 	Vec2 test1 = V2(50.f, 80.f);
 	Vec2 test2 = V2(25.f, 40.f);
+	drawLine(c, &test1, &test2, 0xFFFFFFFF);
+	drawLine(c, &test1, &test2, 0xFFFFFFFF);
+	drawLine(c, &test1, &test2, 0xFFFFFFFF);
 	drawLine(c, &test1, &test2, 0xFFFFFFFF);
 
 }
