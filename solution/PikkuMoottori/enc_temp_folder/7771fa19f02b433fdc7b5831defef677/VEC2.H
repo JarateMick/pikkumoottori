@@ -79,14 +79,6 @@ static inline Vec2 vec2_mul(Vec2* a, float s)
 	return result;
 }
 
-static inline Vec2 vec2_mulv(Vec2* a, Vec2* b)
-{
-	Vec2 result;
-	result.x = a->x * b->x;
-	result.y = a->y * b->y;
-	return result;
-}
-
 static inline void vec2_mul_s(Vec2* dest, Vec2* right, float s)
 {
 	dest->x = right->x * s;

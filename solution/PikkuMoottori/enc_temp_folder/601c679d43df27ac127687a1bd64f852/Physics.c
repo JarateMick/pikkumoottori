@@ -322,28 +322,31 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 	debugInfo.collisionNormal = dist;
 #endif
 
+	///////////////////////
+	// resolve collision //
 	{
 		// calculate relative velocity
-#if 0
 		vec2 rv = vec2_subv(bs->vel + bodyA, bs->vel + bodyB);
 
+		// calculate relative velocity in terms of the normal direction
 		float velAlongNormal = dotProduct(&rv, &dist);
 
 		// do not resolve if velocities are separating
 
-		/*
 		if (velAlongNormal > 0)
-			return;
-		*/
+			goto skip;
 
+		// calculate restitution
 		float e = 1.0f; // min(restA, restB);
 
+		// calculate impulse scalar 
 		float mass1 = 1.f, mass2 = 1.f;
 		float j = -(1 + e) * velAlongNormal;
 		j /= 1.f / mass1 + 1.f / mass2;
 
-		// impulse
+		// apply impulse
 		Vec2 impulse = vec2_mul(&dist, j);
+		// vec2_mul_v(&impulse, &, &);
 
 		float invMass1 = 1.f / mass1;
 		float invMass2 = 1.f / mass2;
@@ -357,92 +360,13 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 
 		// apply angular vel
 		// av += 1.0f / inertia * Cross( contactVector, impulse );
-		// vec2 testVec = vec2_subv()
-
-
-		vec2 test1 = vec2_subv(pos, bs->pos + bodyA);
-		vec2 test2 = vec2_subv(pos, bs->pos + bodyB);
-
-		// 
-		const float inertia = 1.f / 3.f;
-
-		// cross haha
-		float aaa = test1.x * imp1.y - test1.y * imp1.x;
-		float bbb = test2.x * imp2.y - test2.y * imp2.x;
-
-		bs->angularVel[bodyA] += inertia * aaa;
-		bs->angularVel[bodyB] -= inertia * bbb;
-
-#else
-
-
-
-		// V += (j / m)*n
-		// W += (('contact') * j * n) / Ia
-
-
-		// float j = 
-
-		// (-(1 + e) * v1ab * n)
-		// n * n * (1.f / mass1 + 1.f / mass2) + (('contactAP' * n)^2)/Ia + (('contactBP' * n)^2)/Ib
-
-		float j;
-		float e = 1.f;
-
-
-
-		float upper = (-(1 + e));
-		Vec2 vab = vec2_subv(bs->vel + bodyA, bs->vel + bodyB);
-		vab = vec2_mul(&vab, upper);                           // (...)*v1ab
-		upper = dotProduct(&vab, &normal); // maybe
-		// vec2_mul_s
-		// vab = vec2_mul(&vab, &normal);
-		// upper = dotProduct()
-
-		float nn = dotProduct(&normal, &normal);
-		float massOverOne = 1.f;
-		float totalMass = 2.f;
-
-		Vec2 contactAP = vec2_subv(bodyA + bs->pos, pos);
-		Vec2 contactBP = vec2_subv(bodyB + bs->pos, pos);
-
-		float contactAPN = dotProduct(&contactAP, &normal);
-		float contactBPN = dotProduct(&contactBP, &normal);
-		// vec2 cApN = vec2_mulv(&contactAP, &normal);
-		// vec2 cBpN = vec2_mulv(&contactAB, &normal);
-		float contactAPN2 = contactAPN*contactAPN;
-		float contactBPN2 = contactBPN*contactBPN;
-		// TODO: / IA / IB
-
-		float lower = nn * totalMass + contactAPN2 + contactBPN2;
-		j = upper / lower;
-
-		float a = (j / (bs->m[bodyA]));
-		Vec2 v2a;
-		vec2_mul_s(&v2a, normal, a);
-
-		float b = (-j / (bs->m[bodyB]));
-		Vec2 v2b;
-		vec2_mul_s(&v2b, normal, b);
-
-
-		vec2_add_v(bs->acc + bodyA, bs->acc + bodyA, &imp1);
-		vec2_add_v(bs->acc + bodyB, bs->acc + bodyB, &imp2);
-
-		vec2_add_v(bs->acc + bodyA, bs->acc + bodyA, &imp1);
-		vec2_sub_v(bs->acc + bodyB, bs->acc + bodyB, &imp2);
-
-
-		Vev2 jn = vec2_mul(n, j);
-
-		float aAngular = dotProduct(&contactAP, &jn);
-		float bAngular = dotProduct(&contactBP, &jn);
-
-		bs->angularVel[bodyA]
-		bs->angularVel[bodyB]
-
-#endif
-		// (rap * j * n) / in
+		const float inertia = 1.f / 6.f;
+		float aaa = pos->x * imp1.y - pos->y * imp1.x;
+		float bbb = pos->x * imp2.y - pos->y * imp2.x;
+		bs->angularVel[bodyA] -= inertia * aaa;
+		bs->angularVel[bodyB] += inertia * bbb;
+	skip:
+		int a;
 	}
 }
 
@@ -525,8 +449,8 @@ static bool32 polygonIntersection(PhysicsBodies* bodies, int bodyA, int bodyB, V
 				if (projected > maxB)
 				{
 					maxB = projected;
-		}
-	}
+				}
+			}
 
 			if (maxA < minB || maxB < minA)
 				return false;
@@ -542,7 +466,7 @@ static bool32 polygonIntersection(PhysicsBodies* bodies, int bodyA, int bodyB, V
 				bestNormal = normal;
 				collBody = bodyId;
 			}
-}
+		}
 	}
 
 	// dots
@@ -558,8 +482,8 @@ static bool32 polygonIntersection(PhysicsBodies* bodies, int bodyA, int bodyB, V
 	*outNormal = bestNormal;
 	*outId = collBody;
 
-#if 0
 	printf("%i \n", bestI);
+#if 0
 	printf(" is sameh dir: %i ", dotAB > 0.f);
 
 	debugInfo.collisionNormal = bestNormal;
@@ -637,6 +561,8 @@ static void physics_onControl(EngineContext* c, GameState* state, float dt)
 	PhysicsBodies* bodies = state->bodies;
 	if (isMousePressed(c, 0))
 	{
+		// printf("pressered \n");
+
 		for (int i = 0; i < bodies->count; ++i)
 		{
 			vec2* mouse = &c->controller.mouseWorldPos;
@@ -674,6 +600,8 @@ static void physics_onControl(EngineContext* c, GameState* state, float dt)
 			controller->dragging = false;
 			controller->selectedBody = -1;
 
+			// printf("%f %f \n", mouseDiff.x, mouseDiff.y);
+			// printf("drag end\n");
 		}
 		else
 		{
@@ -688,6 +616,8 @@ static void physics_onControl(EngineContext* c, GameState* state, float dt)
 
 			(controller->current)++;
 			controller->base = *mouse;
+
+			// printf("drag\n");
 		}
 	}
 }
@@ -811,7 +741,7 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 #endif
 			c->sprites.colors[0] = collides ? green : red;
 		}
-}
+	}
 
 	bool32 debug_collides[MAX_P_BODIES] = { 0 };
 
@@ -839,14 +769,14 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 
 				for (int vertexIndex = 0; vertexIndex < 4; ++vertexIndex) // joka vertex
 				{
-					int collides = pointInsideRectangle(vp + (outId * 4) + 0, vp + (outId * 4) + 1,
-						vp + (outId * 4) + 2,
-						vp + (outId * 4) + 3, vp + (other * 4) + vertexIndex);
+					int collides = pointInsideRectangle(vp + (outId*4) + 0, vp + (outId*4) + 1,
+						vp + (outId*4) + 2,
+						vp + (outId*4) + 3, vp + (other*4) + vertexIndex);
 
 					if (collides)
 					{
-						collIndex = (other * 4) + vertexIndex;
-						// printf("::: %i \n", collIndex);
+						collIndex = (other*4) + vertexIndex;
+						printf("::: %i \n", collIndex);
 						break;
 					}
 				}
@@ -867,12 +797,12 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 	Vec2* vp = bs->verticesPositions;
 	for (int vertexIndex = 0; vertexIndex < 4; ++vertexIndex) // joka vertex
 	{
-		int collides = pointInsideRectangle(vp + (outId * 4) + 0, vp + (outId * 4) + 1, vp + (outId * 4) + 2,
-			vp + (outId * 4) + 3, vp + (other * 4) + vertexIndex);
+		int collides = pointInsideRectangle(vp + (outId*4) + 0, vp + (outId*4) + 1, vp + (outId*4) + 2,
+			vp + (outId*4) + 3, vp + (other*4) + vertexIndex);
 
 		if (collides)
 		{
-			int collIndex = (other * 4) + vertexIndex;
+			int collIndex = (other*4) + vertexIndex;
 			printf("::: %i \n", collIndex);
 			debug_collides[outId] = 1;
 			// debug_collides[jj] = 1;
@@ -926,12 +856,12 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 					physics_handleCollision(bs, coll, jIndex / 4, iIndex / 4);
 					debug_collides[jIndex / 4] = 1;
 					break;
-				}
-			}
+}
+		}
 #endif
 		skip_coll:
 			(void)0;
-		}
+	}
 	}
 #endif
 
@@ -1131,7 +1061,7 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 	}
 
 
-				}
+}
 
 static void drawBodies(GraphicsContext* c, GameState* state, int count)
 {
