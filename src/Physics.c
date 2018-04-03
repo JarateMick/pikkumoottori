@@ -315,6 +315,8 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 	vec2 dist = normal;
 	vec2_normalizeInPlace(&dist);
 
+	vec2_normalizeInPlace(&normal);
+
 #ifndef NO_DEBUG
 	debugInfo.collisionPoint = *pos;
 	drawThisVec = dist;
@@ -417,29 +419,31 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 		float lower = nn * totalMass + contactAPN2 + contactBPN2;
 		j = upper / lower;
 
-		float a = (j / (bs->m[bodyA]));
+		// float a = (j / (bs->m[bodyA]));
+		float a = j / 1.f;
 		Vec2 v2a;
-		vec2_mul_s(&v2a, normal, a);
+		vec2_mul_s(&v2a, &normal, a);
 
-		float b = (-j / (bs->m[bodyB]));
+		// float b = (-j / (bs->m[bodyB]));
+		float b = -j / 1.f;
 		Vec2 v2b;
-		vec2_mul_s(&v2b, normal, b);
+		vec2_mul_s(&v2b, &normal, b);
 
 
-		vec2_add_v(bs->acc + bodyA, bs->acc + bodyA, &imp1);
-		vec2_add_v(bs->acc + bodyB, bs->acc + bodyB, &imp2);
+		// vec2_add_v(bs->acc + bodyA, bs->acc + bodyA, &v2a);
+		// vec2_add_v(bs->acc + bodyB, bs->acc + bodyB, &v);
 
-		vec2_add_v(bs->acc + bodyA, bs->acc + bodyA, &imp1);
-		vec2_sub_v(bs->acc + bodyB, bs->acc + bodyB, &imp2);
+		vec2_sub_v(bs->acc + bodyA, bs->acc + bodyA, &v2a);
+		vec2_add_v(bs->acc + bodyB, bs->acc + bodyB, &v2b);
 
 
-		Vev2 jn = vec2_mul(n, j);
+		Vec2 jn = vec2_mul(&normal, j);
 
 		float aAngular = dotProduct(&contactAP, &jn);
 		float bAngular = dotProduct(&contactBP, &jn);
 
-		bs->angularVel[bodyA]
-		bs->angularVel[bodyB]
+		bs->angularVel[bodyA] = aAngular;
+		bs->angularVel[bodyB] = bAngular;
 
 #endif
 		// (rap * j * n) / in
