@@ -115,7 +115,6 @@ enum CameraKeys
 
 typedef struct
 {
-
 	bool32 jump;
 	bool32 cameraMovement[size];
 
@@ -127,8 +126,7 @@ typedef struct
 	int32 buttons;
 	int32 lastFrame;
 	int32 mouseWheel;
-} Controller;
-
+} Controller; 
 
 // Scancode_A - 4 == Key_A
 

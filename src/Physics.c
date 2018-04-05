@@ -65,6 +65,11 @@ static float dotProduct(Vec2* a, Vec2* b)
 	return a->x * b->x + a->y * b->y;
 }
 
+static float crossProduct(Vec2* a, Vec2* b)
+{
+	return a->x * b->y - a->y * b->x;
+}
+
 static int pointInsideTringle(Vec2* p1, Vec2* p2, Vec2* p3, Vec2* point)
 {
 	vec2 v0 = vec2_subv(p2, p1);
@@ -395,8 +400,15 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 
 		float upper = (-(1 + e));
 		Vec2 vab = vec2_subv(bs->vel + bodyA, bs->vel + bodyB);
-		vab = vec2_mul(&vab, upper);                           // (...)*v1ab
-		upper = dotProduct(&vab, &normal); // maybe
+
+
+		float velAlongNormal = dotProduct(&vab, &dist);
+		if (velAlongNormal > 0)
+			return;
+
+		// vab = vec2_mul(&vab, upper);                           // (...)*v1ab
+		float dot = dotProduct(&vab, &normal);
+		upper = upper * dot; //      dotProduct(&vab, &normal); // maybe
 		// vec2_mul_s
 		// vab = vec2_mul(&vab, &normal);
 		// upper = dotProduct()
@@ -408,13 +420,16 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 		Vec2 contactAP = vec2_subv(bodyA + bs->pos, pos);
 		Vec2 contactBP = vec2_subv(bodyB + bs->pos, pos);
 
-		float contactAPN = dotProduct(&contactAP, &normal);
-		float contactBPN = dotProduct(&contactBP, &normal);
+		float contactAPN = crossProduct(&contactAP, &normal);
+		float contactBPN = crossProduct(&contactBP, &normal);
 		// vec2 cApN = vec2_mulv(&contactAP, &normal);
 		// vec2 cBpN = vec2_mulv(&contactAB, &normal);
 		float contactAPN2 = contactAPN*contactAPN;
 		float contactBPN2 = contactBPN*contactBPN;
 		// TODO: / IA / IB
+
+		contactAPN2 /= 10.f;
+		contactBPN2 /= 10.f;
 
 		float lower = nn * totalMass + contactAPN2 + contactBPN2;
 		j = upper / lower;
@@ -429,22 +444,19 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 		Vec2 v2b;
 		vec2_mul_s(&v2b, &normal, b);
 
-
 		// vec2_add_v(bs->acc + bodyA, bs->acc + bodyA, &v2a);
 		// vec2_add_v(bs->acc + bodyB, bs->acc + bodyB, &v);
 
-		vec2_sub_v(bs->acc + bodyA, bs->acc + bodyA, &v2a);
+		vec2_add_v(bs->acc + bodyA, bs->acc + bodyA, &v2a);
 		vec2_add_v(bs->acc + bodyB, bs->acc + bodyB, &v2b);
-
 
 		Vec2 jn = vec2_mul(&normal, j);
 
-		float aAngular = dotProduct(&contactAP, &jn);
-		float bAngular = dotProduct(&contactBP, &jn);
+		float aAngular = crossProduct(&contactAP, &jn);
+		float bAngular = crossProduct(&contactBP, &jn);
 
-		bs->angularVel[bodyA] = aAngular;
-		bs->angularVel[bodyB] = bAngular;
-
+		bs->angularVel[bodyA] -= aAngular;
+		bs->angularVel[bodyB] += bAngular;
 #endif
 		// (rap * j * n) / in
 	}

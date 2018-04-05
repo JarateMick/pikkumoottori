@@ -5,7 +5,7 @@ SET me=%~n0:
 
 echo %me% Build starting
 
-set CFLAGS=
+set CFLAGS= -gcodeview -g
 ::  -gcodeview -g
 set LFLAGS= -incremental:no   
 set LFLAGS=%LFLAGS%  -LIBPATH:"../deps/lib" -incremental:no -opt:ref 
