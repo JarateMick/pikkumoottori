@@ -2,6 +2,21 @@
 #include "Physics.h"
 #include <float.h>
 
+static float dotProduct(Vec2* a, Vec2* b)
+{
+	return a->x * b->x + a->y * b->y;
+}
+
+static float crossProduct(Vec2* a, Vec2* b)
+{
+	return a->x * b->y - a->y * b->x;
+}
+
+static inline float pow2(float x)
+{
+	return x * x;
+}
+
 static void testPhysicsBodies(GameState* state, GraphicsContext* c, int count)
 {
 	// init stuff
@@ -13,7 +28,7 @@ static void testPhysicsBodies(GameState* state, GraphicsContext* c, int count)
 	{
 		bs->pos[i] = V2(i * 25.f, 150.f);
 		bs->size[i] = V2(20.f, 20.f);
-		bs->m[i] = 5.f;
+		bs->m[i] = 1.f;
 	}
 
 	memset(bs->acc, 0, sizeof(Vec2) * MAX_P_BODIES);
@@ -43,6 +58,27 @@ static void testPhysicsBodies(GameState* state, GraphicsContext* c, int count)
 	bs->size[4] = V2(400.f, 20.f);
 
 	memset(&state->physicsControls, 0, sizeof(PhysicsController));
+
+
+	vec2 test[] = { { 0.f, 0.f }, { 0.f, 20.f }, { 20.f, 0.f }, { 20.f, 20.f } };
+	float sum = 0.f;
+	for (int i = 0; i < 4; ++i) {
+		vec2 dist = vec2_subv(test + 0, test + 1);
+		sum += (dist.x * dist.x + dist.y * dist.y) * 0.25f;
+		// (dotProduct(test + i, test + 0) * 0.25f);
+	}
+
+
+	// float momentumOfInertia = (1.f / 12.f) * 1.f * (20.f * 20.f + 20.f * 20.f);
+
+	for (int i = 0; i < count; ++i)
+	{
+		float momentumOfInertia = (1.f / 12.f) * bs->m[i] * (pow2(bs->size[i].x) + pow2(bs->size[i].y));
+		bs->momentOfInertia[i] = momentumOfInertia;
+		printf("%f \n", momentumOfInertia);
+	}
+
+	printf("%f \n", sum);
 }
 
 static inline Vec2 rotatePoint(Vec2* point, float angle)
@@ -60,15 +96,6 @@ static inline setSprites(Sprites* s, Vec2 pos, Vec2 size, int texId, int id)
 	s->ids[id] = texId;
 }
 
-static float dotProduct(Vec2* a, Vec2* b)
-{
-	return a->x * b->x + a->y * b->y;
-}
-
-static float crossProduct(Vec2* a, Vec2* b)
-{
-	return a->x * b->y - a->y * b->x;
-}
 
 static int pointInsideTringle(Vec2* p1, Vec2* p2, Vec2* p3, Vec2* point)
 {
@@ -157,7 +184,34 @@ static void InitPhysicsTest(PhysicsBodies* b)
 	b->acc[4] = V2(0.f, -0.1f);
 	b->angularVel[4] = 0.f;
 	b->rot[4] = 0.f;
+
+	for (int i = 0; i < 5; ++i)
+	{
+		float momentumOfInertia = (1.f / 12.f) * b->m[i] * (pow2(b->size[i].x) + pow2(b->size[i].y));
+		b->momentOfInertia[i] = momentumOfInertia;
+		printf("%f \n", momentumOfInertia);
+	}
 }
+
+static void SetPhysicsObject(PhysicsBodies* b, int id, vec2 pos, vec2 size, vec2 vel, float rot, float angularVel)
+{
+	b->pos[id] = pos;
+	b->vel[id] = V2(0.f, 0.f);
+	b->size[id] = size;
+	b->acc[id] = vel;
+	b->angularVel[id] = angularVel;
+	b->rot[id] = rot;
+}
+
+static void InitPhysicsTest2(PhysicsBodies* b)
+{
+	SetPhysicsObject(b, 0, V2(420.f, 120.f), V2(20.f, 20.f), V2(0.f, 0.f), 0.f, 0.4f);
+	SetPhysicsObject(b, 1, V2(444.f, 130.f), V2(20.f, 20.f), V2(0.f, 0.f), 1.f, 0.0f);
+	// SetPhysicsObject(b, 0, V2(30.f, 30.f), V2(20.f, 20.f), V2(0.f, 0.f), 0.f, 0.1f);
+	// SetPhysicsObject(b, 0, V2(30.f, 30.f), V2(20.f, 20.f), V2(0.f, 0.f), 0.f, 0.1f);
+	// SetPhysicsObject(b, 0, V2(30.f, 30.f), V2(20.f, 20.f), V2(0.f, 0.f), 0.f, 0.1f);
+}
+
 
 static int32 physics_checkCollision(PhysicsBodies* bs, int iIndex, int jIndex)
 {
@@ -314,7 +368,7 @@ static void physics_handleCollision(PhysicsBodies* bs, int collIndex, int bodyA,
 
 static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int bodyA, int bodyB, Vec2* normalIn)
 {
-	vec2* pos = bs->verticesPositions + collIndex;
+	vec2* collisionPoint = bs->verticesPositions + collIndex;
 
 	vec2 normal = *normalIn;
 	vec2 dist = normal;
@@ -323,9 +377,9 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 	vec2_normalizeInPlace(&normal);
 
 #ifndef NO_DEBUG
-	debugInfo.collisionPoint = *pos;
+	debugInfo.collisionPoint = *collisionPoint;
 	drawThisVec = dist;
-	from = *pos;
+	from = *collisionPoint;
 	debugInfo.collisionNormal = dist;
 #endif
 
@@ -396,15 +450,44 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 		float j;
 		float e = 1.f;
 
-
-
 		float upper = (-(1 + e));
-		Vec2 vab = vec2_subv(bs->vel + bodyA, bs->vel + bodyB);
+
+		// r? 
+		Vec2 contactAP = vec2_subv(collisionPoint, bodyA + bs->pos);
+		Vec2 contactBP = vec2_subv(collisionPoint, bodyB + bs->pos);
+
+		vec2 velA = bs->vel[bodyA];
+		vec2 velB = bs->vel[bodyB];
+		float angularA = bs->angularVel[bodyA];
+		float angularB = bs->angularVel[bodyB];
+
+		vec2 ang = V2(angularA * contactAP.y, angularA * contactAP.x);
+		vec2 bng = V2(angularB * contactBP.y, angularB * contactBP.x);
+
+		// float av = angularA * contactAP.y - angularA * contactAP.x;
+		// float bv = angularB * contactBP.y - angularB * contactBP.x;
+
+		vec2_add_v(&velA, &velA, &ang);
+		vec2_add_v(&velB, &velB, &bng);
 
 
-		float velAlongNormal = dotProduct(&vab, &dist);
+		Vec2 vab = vec2_subv(&velA, &velB);
+
+		// float velAlongNormal = dotProduct(&vab, &dist);
+		vec2 vab2 = vec2_subv(bs->vel + bodyA, bs->vel + bodyB);
+		float velAlongNormal = dotProduct(&vab2, &dist);
+		// float velAlongNormal = crossProduct(&vab2, &dist);
+
+		printf("vel %f \n", velAlongNormal);
 		if (velAlongNormal > 0)
 			return;
+
+		static int debugCounter = 0;
+		debugCounter++;
+		if (debugCounter == 3)
+			debugBreak();
+
+		printf("coll\n");
 
 		// vab = vec2_mul(&vab, upper);                           // (...)*v1ab
 		float dot = dotProduct(&vab, &normal);
@@ -414,22 +497,23 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 		// upper = dotProduct()
 
 		float nn = dotProduct(&normal, &normal);
-		float massOverOne = 1.f;
-		float totalMass = 2.f;
 
-		Vec2 contactAP = vec2_subv(bodyA + bs->pos, pos);
-		Vec2 contactBP = vec2_subv(bodyB + bs->pos, pos);
+		float massOverOneA = 1.f / bs->m[bodyA];
+		float massOverOneB = 1.f / bs->m[bodyB];
+
+		float totalMass = massOverOneA + massOverOneB;
+
 
 		float contactAPN = crossProduct(&contactAP, &normal);
 		float contactBPN = crossProduct(&contactBP, &normal);
 		// vec2 cApN = vec2_mulv(&contactAP, &normal);
 		// vec2 cBpN = vec2_mulv(&contactAB, &normal);
-		float contactAPN2 = contactAPN*contactAPN;
-		float contactBPN2 = contactBPN*contactBPN;
+		float contactAPN2 = (contactAPN*contactAPN) / bs->momentOfInertia[bodyA];
+		float contactBPN2 = (contactBPN*contactBPN) / bs->momentOfInertia[bodyB];
 		// TODO: / IA / IB
 
-		contactAPN2 /= 10.f;
-		contactBPN2 /= 10.f;
+		// contactAPN2 /= 10.f;
+		// contactBPN2 /= 10.f;
 
 		float lower = nn * totalMass + contactAPN2 + contactBPN2;
 		j = upper / lower;
@@ -459,7 +543,7 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 		bs->angularVel[bodyB] += bAngular;
 #endif
 		// (rap * j * n) / in
-	}
+}
 }
 
 static float IntervalDistance(float minA, float maxA, float minB, float maxB) {
@@ -541,8 +625,8 @@ static bool32 polygonIntersection(PhysicsBodies* bodies, int bodyA, int bodyB, V
 				if (projected > maxB)
 				{
 					maxB = projected;
-		}
-	}
+				}
+			}
 
 			if (maxA < minB || maxB < minA)
 				return false;
@@ -558,7 +642,7 @@ static bool32 polygonIntersection(PhysicsBodies* bodies, int bodyA, int bodyB, V
 				bestNormal = normal;
 				collBody = bodyId;
 			}
-}
+		}
 	}
 
 	// dots
@@ -589,7 +673,7 @@ static bool32 polygonIntersection(PhysicsBodies* bodies, int bodyA, int bodyB, V
 #endif
 
 	return true;
-}
+		}
 
 
 
@@ -765,6 +849,11 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 		{
 			InitPhysicsTest(bs);
 		}
+
+		if (isKeyPressed(core, Key_V))
+		{
+			InitPhysicsTest2(bs);
+		}
 	}
 
 	// Check For collisions
@@ -827,7 +916,7 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 #endif
 			c->sprites.colors[0] = collides ? green : red;
 		}
-}
+	}
 
 	bool32 debug_collides[MAX_P_BODIES] = { 0 };
 
@@ -926,8 +1015,8 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 					debug_collides[iIndex / 4] = 1;
 					goto skip_coll;
 					break;
-				}
-			}
+}
+		}
 #endif
 #if 0
 			for (int vertexIndex = 0; vertexIndex < 4; ++vertexIndex) // joka vertex
@@ -947,8 +1036,8 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 #endif
 		skip_coll:
 			(void)0;
-		}
 	}
+}
 #endif
 
 	for (int i = 0; i < ArrayCount(debug_collides); ++i) {
@@ -1039,13 +1128,7 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 			dist.y = -tmpX;
 		}
 
-
-
-
-
 		// Vec2 something = vec2_addv(dist);
-
-
 		drawThisVec = dist;
 		from = *pos;
 
@@ -1147,7 +1230,7 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 	}
 
 
-				}
+	}
 
 static void drawBodies(GraphicsContext* c, GameState* state, int count)
 {

@@ -1,6 +1,8 @@
 @echo off
 :: setlocal enabledelayedexpansion
-ctime -begin engine.ctm
+:: setlocal ENABLEDELAYEDEXPANSION EnableExtensions 
+
+:: ctime -begin engine.ctm
 SET me=%~n0:
 
 echo %me% Build starting
@@ -109,4 +111,4 @@ echo %me% Running
 
 popd
 echo %me% Done!
-ctime -end engine.ctm
+:: ctime -end engine.ctm

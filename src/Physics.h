@@ -14,6 +14,8 @@ typedef struct
 	float torque[MAX_P_BODIES];
 	float angularVel[MAX_P_BODIES];
 
+	float momentOfInertia[MAX_P_BODIES];
+
 	Vec2 verticesPositions[MAX_P_BODIES * 4];
 
 	int count;
