@@ -17,6 +17,23 @@ static inline float pow2(float x)
 	return x * x;
 }
 
+static inline Vec2 CrossProductVS(const Vec2* a, float s)
+{
+	return V2(-s * a->y, s * a->x);
+}
+
+static inline Vec2 CrossProductSV(float s, const Vec2* a)
+{
+	return V2(-s * a->y, s * a->x);
+}
+
+static inline Vec2 turn(Vec2* a)
+{
+	return V2(-a->y, a->x);
+}
+
+// #define PIXELS_TO_METERS 20.f
+
 static void testPhysicsBodies(GameState* state, GraphicsContext* c, int count)
 {
 	// init stuff
@@ -28,7 +45,7 @@ static void testPhysicsBodies(GameState* state, GraphicsContext* c, int count)
 	{
 		bs->pos[i] = V2(i * 25.f, 150.f);
 		bs->size[i] = V2(20.f, 20.f);
-		bs->m[i] = 1.f;
+		bs->m[i] = 5.f;
 	}
 
 	memset(bs->acc, 0, sizeof(Vec2) * MAX_P_BODIES);
@@ -447,22 +464,32 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 		// (-(1 + e) * v1ab * n)
 		// n * n * (1.f / mass1 + 1.f / mass2) + (('contactAP' * n)^2)/Ia + (('contactBP' * n)^2)/Ib
 
+
+		// V' = V + w x r				(contact)
+
 		float j;
 		float e = 1.f;
 
 		float upper = (-(1 + e));
 
 		// r? 
-		Vec2 contactAP = vec2_subv(collisionPoint, bodyA + bs->pos);
-		Vec2 contactBP = vec2_subv(collisionPoint, bodyB + bs->pos);
+		// Vec2 contactAP = vec2_subv(collisionPoint, bodyA + bs->pos);
+		// Vec2 contactBP = vec2_subv(collisionPoint, bodyB + bs->pos);
+
+		Vec2 contactAP = vec2_subv(bodyA + bs->pos, collisionPoint);
+		Vec2 contactBP = vec2_subv(bodyB + bs->pos, collisionPoint);
+
 
 		vec2 velA = bs->vel[bodyA];
 		vec2 velB = bs->vel[bodyB];
 		float angularA = bs->angularVel[bodyA];
 		float angularB = bs->angularVel[bodyB];
 
-		vec2 ang = V2(angularA * contactAP.y, angularA * contactAP.x);
-		vec2 bng = V2(angularB * contactBP.y, angularB * contactBP.x);
+		// vec2 ang = V2(angularA * contactAP.y, angularA * contactAP.x);
+		// vec2 bng = V2(angularB * contactBP.y, angularB * contactBP.x);
+
+		vec2 ang = CrossProductSV(angularA, &contactAP);
+		vec2 bng = CrossProductSV(angularB, &contactBP);
 
 		// float av = angularA * contactAP.y - angularA * contactAP.x;
 		// float bv = angularB * contactBP.y - angularB * contactBP.x;
@@ -476,16 +503,19 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 		// float velAlongNormal = dotProduct(&vab, &dist);
 		vec2 vab2 = vec2_subv(bs->vel + bodyA, bs->vel + bodyB);
 		float velAlongNormal = dotProduct(&vab2, &dist);
-		// float velAlongNormal = crossProduct(&vab2, &dist);
 
-		printf("vel %f \n", velAlongNormal);
+		// float velAlongNormal2jokaeitoimi = dotProduct(&vab, &dist);
+
+		// printf("vel %f \n", velAlongNormal);
+		// printf("vel %f \n", velAlongNormal2jokaeitoimi);
+
 		if (velAlongNormal > 0)
 			return;
 
-		static int debugCounter = 0;
-		debugCounter++;
-		if (debugCounter == 3)
-			debugBreak();
+		// static int debugCounter = 0;
+		// debugCounter++;
+		// if (debugCounter == 2)
+			// debugBreak();
 
 		printf("coll\n");
 
@@ -515,16 +545,16 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 		// contactAPN2 /= 10.f;
 		// contactBPN2 /= 10.f;
 
-		float lower = nn * totalMass + contactAPN2 + contactBPN2;
+		float lower = /*nn*/ 1.f * totalMass + contactAPN2 + contactBPN2;
 		j = upper / lower;
 
 		// float a = (j / (bs->m[bodyA]));
-		float a = j / 1.f;
+		float a = j / bs->m[bodyA];
 		Vec2 v2a;
 		vec2_mul_s(&v2a, &normal, a);
 
 		// float b = (-j / (bs->m[bodyB]));
-		float b = -j / 1.f;
+		float b = -j / bs->m[bodyB];
 		Vec2 v2b;
 		vec2_mul_s(&v2b, &normal, b);
 
@@ -536,14 +566,20 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 
 		Vec2 jn = vec2_mul(&normal, j);
 
+
+		turn(&contactAP);
+		turn(&contactBP);
 		float aAngular = crossProduct(&contactAP, &jn);
 		float bAngular = crossProduct(&contactBP, &jn);
+
+		aAngular /= bs->momentOfInertia[bodyA];
+		bAngular /= bs->momentOfInertia[bodyB];
 
 		bs->angularVel[bodyA] -= aAngular;
 		bs->angularVel[bodyB] += bAngular;
 #endif
 		// (rap * j * n) / in
-}
+	}
 }
 
 static float IntervalDistance(float minA, float maxA, float minB, float maxB) {
@@ -673,7 +709,7 @@ static bool32 polygonIntersection(PhysicsBodies* bodies, int bodyA, int bodyB, V
 #endif
 
 	return true;
-		}
+}
 
 
 
@@ -769,7 +805,7 @@ static void physics_onControl(EngineContext* c, GameState* state, float dt)
 
 			vec2_normalizeInPlace(&mouseDiff);
 			vec2_mul(&mouseDiff, 0.1f);
-			bodies->vel[controller->selectedBody] = mouseDiff;
+			bodies->vel[controller->selectedBody] = vec2_mul(&mouseDiff, 0.1f); 
 
 			controller->dragging = false;
 			controller->selectedBody = -1;
@@ -1015,8 +1051,8 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 					debug_collides[iIndex / 4] = 1;
 					goto skip_coll;
 					break;
-}
-		}
+				}
+			}
 #endif
 #if 0
 			for (int vertexIndex = 0; vertexIndex < 4; ++vertexIndex) // joka vertex
@@ -1036,8 +1072,8 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 #endif
 		skip_coll:
 			(void)0;
+		}
 	}
-}
 #endif
 
 	for (int i = 0; i < ArrayCount(debug_collides); ++i) {
@@ -1230,7 +1266,7 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 	}
 
 
-	}
+}
 
 static void drawBodies(GraphicsContext* c, GameState* state, int count)
 {
