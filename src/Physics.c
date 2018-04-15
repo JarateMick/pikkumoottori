@@ -2,12 +2,12 @@
 #include "Physics.h"
 #include <float.h>
 
-static float dotProduct(Vec2* a, Vec2* b)
+static inline float dotProduct(Vec2* a, Vec2* b)
 {
 	return a->x * b->x + a->y * b->y;
 }
 
-static float crossProduct(Vec2* a, Vec2* b)
+static inline float crossProduct(Vec2* a, Vec2* b)
 {
 	return a->x * b->y - a->y * b->x;
 }
@@ -72,7 +72,7 @@ static void testPhysicsBodies(GameState* state, GraphicsContext* c, int count)
 	}
 
 	bs->pos[4] = V2(100.f, 60.f);
-	bs->size[4] = V2(400.f, 20.f);
+	bs->size[4] = V2(100.f, 20.f);
 
 	memset(&state->physicsControls, 0, sizeof(PhysicsController));
 
@@ -504,7 +504,7 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 		vec2 vab2 = vec2_subv(bs->vel + bodyA, bs->vel + bodyB);
 		float velAlongNormal = dotProduct(&vab2, &dist);
 
-		// float velAlongNormal2jokaeitoimi = dotProduct(&vab, &dist);
+		float velAlongNormal2jokaeitoimi = dotProduct(&vab, &dist);
 
 		// printf("vel %f \n", velAlongNormal);
 		// printf("vel %f \n", velAlongNormal2jokaeitoimi);
@@ -805,7 +805,7 @@ static void physics_onControl(EngineContext* c, GameState* state, float dt)
 
 			vec2_normalizeInPlace(&mouseDiff);
 			vec2_mul(&mouseDiff, 0.1f);
-			bodies->vel[controller->selectedBody] = vec2_mul(&mouseDiff, 0.1f); 
+			bodies->vel[controller->selectedBody] = vec2_mul(&mouseDiff, 0.1f);
 
 			controller->dragging = false;
 			controller->selectedBody = -1;
@@ -972,11 +972,17 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 				int j = outId == ii ? jj : ii;
 
 				// Hahahahahhahahahhahhaaahahahhahah
-				int collIndex = 0;
 				Vec2* vp = bs->verticesPositions;
 
-				// other == 
 				int other = outId == ii ? jj : ii;
+				int collIndex = (other * 4) + 0;
+
+				if (outId == jj) // normal 180* v''rin
+				{
+					outNormal.x = -outNormal.x;
+					outNormal.y = -outNormal.y;
+				}
+
 
 				for (int vertexIndex = 0; vertexIndex < 4; ++vertexIndex) // joka vertex
 				{

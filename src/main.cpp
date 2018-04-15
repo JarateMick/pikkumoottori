@@ -162,8 +162,8 @@ extern "C" int mainf()
 #ifndef __EMSCRIPTEN__
 	initializeApplication(&graphics, "graphics", "initGraphics", "updateGraphics", "drawGraphics");
 #endif
-	initMemory(&app, Megabytes(128));
-	initMemory(&graphics, Megabytes(128));
+	initMemory(&app, Megabytes(64));
+	initMemory(&graphics, Megabytes(32));
 
 #ifdef __EMSCRIPTEN__
 	app.gameInitPtr = initGame;
