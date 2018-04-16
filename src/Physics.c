@@ -187,8 +187,9 @@ static void InitPhysicsTest(PhysicsBodies* b)
 	SetPhysicsObject(b, 1, V2(100.f, 300.f), V2(40.f, 40.f), V2(0.f, -50.f), 2.14f, 0.1f);
 	SetPhysicsObject(b, 2, V2(40.f, 280.f),  V2(40.f, 60.f), V2(0.f, 0.0f), 0.f, 0.0f);
 	SetPhysicsObject(b, 3, V2(37.f, 140.f),  V2(40.f, 60.f), V2(0.f, 0.0f), 3.14f, 0.0f);
-	SetPhysicsObject(b, 4, V2(380.f, 280.f), V2(60.f, 40.f), V2(0.f, 0.0f), 0.0f, 0.f); // hasdf
-	SetPhysicsObject(b, 5, V2(400.f, 200.f), V2(40.f, 40.f), V2(0.f, -0.1f), 2.f, 0.0f);
+	SetPhysicsObject(b, 5, V2(380.f, 280.f), V2(60.f, 40.f), V2(0.f, 0.0f), 0.0f, 0.f); // hasdf
+	SetPhysicsObject(b, 4, V2(50.f, 50.f), V2(400.f, 40.f), V2(0.f, 0.0f), 0.f, 0.0f);
+	b->m[4] = 1000.f;
 	recalculateMomentumOfInertia(b);
 }
 
@@ -437,7 +438,7 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 		// V' = V + w x r				(contact)
 
 		float j;
-		float e = 0.8f;
+		float e = 1.0f;
 
 		float upper = (-(1 + e));
 
@@ -1170,7 +1171,7 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 //				goto skip;
 
 			// calculate restitution
-			float e = 1.f; // min(restA, restB);
+			float e = 0.f; // min(restA, restB);
 
 			// calculate impulse scalar 
 			float mass1 = 1.f, mass2 = 1.f;
