@@ -156,7 +156,7 @@ static void applyImpulse(PhysicsBodies* b, Vec2* contact, Vec2 impulse, int id)
 	// angularVelocity += 1.0f / inertia * Cross( contactVector, impulse );
 }
 
-#define GRAV -9.81f * 60.f
+#define GRAV -9.81f / 50.f
 
 vec2 drawThisVec;
 vec2 from;
@@ -184,7 +184,7 @@ static void recalculateMomentumOfInertia(PhysicsBodies* b)
 static void InitPhysicsTest(PhysicsBodies* b)
 {
 	SetPhysicsObject(b, 0, V2(100.f, 200.f), V2(40.f, 40.f), V2(0.f, 0.f),   30.f, 0.0f);
-	SetPhysicsObject(b, 1, V2(100.f, 300.f), V2(40.f, 40.f), V2(0.f, -50.f), 2.14f, 0.1f);
+	SetPhysicsObject(b, 1, V2(100.f, 300.f), V2(40.f, 40.f), V2(0.f, -0.1f), 2.14f, 0.1f);
 	SetPhysicsObject(b, 2, V2(40.f, 280.f),  V2(40.f, 60.f), V2(0.f, 0.0f), 0.f, 0.0f);
 	SetPhysicsObject(b, 3, V2(37.f, 140.f),  V2(40.f, 60.f), V2(0.f, 0.0f), 3.14f, 0.0f);
 	SetPhysicsObject(b, 4, V2(380.f, 280.f), V2(60.f, 40.f), V2(0.f, 0.0f), 0.0f, 0.f); // hasdf
@@ -445,10 +445,8 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 		// Vec2 contactAP = vec2_subv(collisionPoint, bodyA + bs->pos);
 		// Vec2 contactBP = vec2_subv(collisionPoint, bodyB + bs->pos);
 
-		
-
-		Vec2 contactAP = vec2_subv(collisionPoint, bodyA + bs->pos);
-		Vec2 contactBP = vec2_subv(collisionPoint, bodyB + bs->pos);
+		Vec2 contactAP = vec2_subv(bodyA + bs->pos, collisionPoint);
+		Vec2 contactBP = vec2_subv(bodyB + bs->pos, collisionPoint);
 
 		vec2 velA = bs->vel[bodyA];
 		vec2 velB = bs->vel[bodyB];
@@ -458,15 +456,8 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 		// vec2 ang = V2(angularA * contactAP.y, angularA * contactAP.x);
 		// vec2 bng = V2(angularB * contactBP.y, angularB * contactBP.x);
 
-
-		// vec2 ang = CrossProductSV(angularA, &contactAP);
-		// vec2 bng = CrossProductSV(angularB, &contactBP);
-		contactAP = turn(&contactAP);
-		contactBP = turn(&contactBP);
-
-		vec2 ang = vec2_mul(&contactAP, angularA);
-		vec2 bng = vec2_mul(&contactBP, angularB);
-
+		vec2 ang = CrossProductSV(angularA, &contactAP);
+		vec2 bng = CrossProductSV(angularB, &contactBP);
 
 		// float av = angularA * contactAP.y - angularA * contactAP.x;
 		// float bv = angularB * contactBP.y - angularB * contactBP.x;
@@ -477,10 +468,10 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 		Vec2 vab = vec2_subv(&velA, &velB);
 
 		// float velAlongNormal = dotProduct(&vab, &dist);
-		// vec2 vab2 = vec2_subv(bs->vel + bodyA, bs->vel + bodyB);
-		// float velAlongNormal = dotProduct(&vab2, &dist);
+		vec2 vab2 = vec2_subv(bs->vel + bodyA, bs->vel + bodyB);
+		float velAlongNormal = dotProduct(&vab2, &dist);
 
-		float velAlongNormal = dotProduct(&vab, &dist);
+		float velAlongNormal2jokaeitoimi = dotProduct(&vab, &dist);
 
 		// printf("vel %f \n", velAlongNormal);
 		// printf("vel %f \n", velAlongNormal2jokaeitoimi);
@@ -509,8 +500,8 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 
 		float totalMass = massOverOneA + massOverOneB;
 
-		float contactAPN = dotProduct(&contactAP, &normal);
-		float contactBPN = dotProduct(&contactBP, &normal);
+		float contactAPN = crossProduct(&contactAP, &normal);
+		float contactBPN = crossProduct(&contactBP, &normal);
 		// vec2 cApN = vec2_mulv(&contactAP, &normal);
 		// vec2 cBpN = vec2_mulv(&contactAB, &normal);
 		float contactAPN2 = (contactAPN*contactAPN) / bs->momentOfInertia[bodyA];
@@ -542,6 +533,8 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 		Vec2 jn = vec2_mul(&normal, j);
 
 
+		turn(&contactAP);
+		turn(&contactBP);
 		float aAngular = dotProduct(&contactAP, &jn);
 		float bAngular = dotProduct(&contactBP, &jn);
 		// float aAngular = crossProduct(&contactAP, &jn);
@@ -550,8 +543,8 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 		aAngular /= bs->momentOfInertia[bodyA];
 		bAngular /= bs->momentOfInertia[bodyB];
 
-		bs->angularVel[bodyA] += aAngular;
-		bs->angularVel[bodyB] -= bAngular;
+		bs->angularVel[bodyA] -= aAngular;
+		bs->angularVel[bodyB] += bAngular;
 #endif
 		// (rap * j * n) / in
 	}
@@ -779,7 +772,7 @@ static void physics_onControl(EngineContext* c, GameState* state, float dt)
 			}
 
 			vec2_normalizeInPlace(&mouseDiff);
-			vec2_mul(&mouseDiff, 1000.f);
+			vec2_mul(&mouseDiff, 0.1f);
 			bodies->vel[controller->selectedBody] = vec2_mul(&mouseDiff, 0.1f);
 
 			controller->dragging = false;
@@ -816,7 +809,7 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 	// Compute Forces
 	// gravity
 
-#if 1
+#if 0
 	for (int i = 0; i < bs->count; ++i) {
 		float force = GRAV / bs->m[i];
 		bs->acc[i].y += force * dt;
@@ -1221,9 +1214,7 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 		vec2* pos = bs->pos + i;
 		vec2* vel = bs->vel + i;
 
-		vec2 veldt;
-		vec2_mul_s(&veldt, vel, dt);
-		vec2_add_v(pos, pos, &veldt);
+		vec2_add_v(pos, pos, vel);
 
 		if (pos->x < 0.f || pos->x > 2000.f)
 			vel->x = -vel->x;
