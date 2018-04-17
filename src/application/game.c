@@ -220,7 +220,7 @@ EXPORT DRAW_GAME(drawGame)
 #endif
 
 
-	drawBodies(engine, &engine->context ,gameState, 10);
+	drawBodies(engine, &engine->context ,gameState, gameState->bodies->count);
 
 	if (isKeyDown(engine, Key_1))
 	{

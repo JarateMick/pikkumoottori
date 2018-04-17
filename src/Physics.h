@@ -2,7 +2,32 @@
 #include "vec2.h" // visual studio drunk
 #define MAX_P_BODIES 100
 
-typedef struct 
+typedef struct {
+	int first;
+	int second;
+
+	float length;
+	float k;
+
+	int vertIndexA;
+	int vertIndexB;
+} SpringPair;
+
+typedef struct
+{
+	SpringPair springPairs[MAX_P_BODIES / 2];
+	int springCount;
+} Springs;
+
+#define MAKE_SPRING(a, b, len, k, vertA, vertB) { a, b, len, k, vertA, vertB }
+
+static SpringPair inline springpair(int a, int b, float length, float k, int vertA, int vertB)
+{
+	SpringPair result = MAKE_SPRING(a, b, length, k, vertA, vertB);
+	return result;
+}
+
+typedef struct
 {
 	Vec2 pos[MAX_P_BODIES];
 	Vec2 vel[MAX_P_BODIES];
@@ -19,9 +44,12 @@ typedef struct
 	Vec2 verticesPositions[MAX_P_BODIES * 4];
 
 	int count;
+
+	Springs springs;
 } PhysicsBodies;
 
-typedef struct 
+
+typedef struct
 {
 	int selectedBody;
 
@@ -34,3 +62,5 @@ typedef struct
 
 // typedef struct GameState GameState;
 static void testPhysicsBodies(GameState* state, GraphicsContext* c, int count);
+static void SetPhysicsObject(PhysicsBodies* b, int id, vec2 pos, vec2 size, vec2 vel, float rot, float angularVel);
+static void recalculateMomentumOfInertia(PhysicsBodies* b);

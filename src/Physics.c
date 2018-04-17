@@ -34,69 +34,110 @@ static inline Vec2 turn(Vec2* a)
 
 // #define PIXELS_TO_METERS 20.f
 
+static void addSpring(PhysicsBodies* bodies, int a, int b, float len, float k,
+	int vertA, int vertB)
+{
+	Springs* springs = &bodies->springs;
+	int slot = springs->springCount;
+
+	springs->springPairs[slot] = springpair(a, b, len, k, vertA, vertB);
+	springs->springCount += 1;
+}
+
+static const float force_coeff = 1.f;
+static void updateSprings(PhysicsBodies* bodies)
+{
+	Springs* s = &bodies->springs;
+
+	for (int i = 0; i < s->springCount; ++i)
+	{
+		SpringPair* p = s->springPairs + i;
+
+		int bodyA = p->first;
+		int bodyB = p->second;
+
+						         // Vec2 verticesPositions[MAX_P_BODIES * 4];
+		vec2 distVec = vec2_subv(bodies->verticesPositions + (bodyA * 4 + p->vertIndexA),
+								 bodies->verticesPositions + (bodyB * 4 + p->vertIndexB));
+		float distance = vec2_len(&distVec);
+
+		vec2_normalizeInPlace(&distVec);
+
+		float deltalength = p->length - distance;
+		float force = deltalength * p->k;
+
+		vec2_mul_s(&distVec, &distVec, force);
+
+		vec2_add_v(bodies->vel + bodyA, bodies->vel + bodyA, &distVec);
+		vec2_sub_v(bodies->vel + bodyB, bodies->vel + bodyB, &distVec);
+
+		//if (distance < p->minL) 
+		//{
+		//	// PUSH OUTWARDS
+		//	// A->B vector
+		//}
+		//else if (distance > p->maxL)
+		//{
+			// PUSH INWARDS
+			// B->A vector
+		// vec2_sub_v(bodies->vel + bodyA, bodies->vel + bodyA, &distVec);
+		// vec2_add_v(bodies->vel + bodyB, bodies->vel + bodyB, &distVec);
+		// }
+	}
+}
+
 static void testPhysicsBodies(GameState* state, GraphicsContext* c, int count)
 {
 	// init stuff
 	PhysicsBodies* bs = state->bodies;
-
 	count = 6;
+
+	memset(bs, 0, sizeof(PhysicsBodies));
 
 	for (int i = 0; i < count; ++i)
 	{
 		bs->pos[i] = V2(i * 25.f, 150.f);
 		bs->size[i] = V2(60.f, 60.f);
-		bs->m[i] = 5.f;
 	}
-
-	memset(bs->acc, 0, sizeof(Vec2) * MAX_P_BODIES);
-	memset(bs->vel, 0, sizeof(Vec2) * MAX_P_BODIES);
-	memset(bs->rot, 0, sizeof(float) * MAX_P_BODIES);
-	memset(bs->angularVel, 0, sizeof(float) * MAX_P_BODIES);
-	memset(bs->torque, 0, sizeof(float) * MAX_P_BODIES);
 
 	bs->count = count;
 
-
-	// Drawing quads
 	ResourceHolder* h = &c->resourceHolder;
 	Texture2D* tex = getTexture(h, Texture_box);
-
-	c->sprites.positions = bs->pos;
-	c->sprites.sizes = bs->size;
-	c->sprites.rotation = bs->rot;
-	c->sprites.count = count;
-
-	for (int i = 0; i < count + 4; ++i)
+	for (int i = 0; i < MAX_P_BODIES; ++i)
 	{
 		c->sprites.ids[i] = tex->ID;
+		bs->m[i] = 5.f;
 	}
+
 
 	bs->pos[4] = V2(100.f, 60.f);
 	bs->size[4] = V2(100.f, 60.f);
 
 	memset(&state->physicsControls, 0, sizeof(PhysicsController));
 
+	SetPhysicsObject(bs, 6, V2(200.f, 200.f), V2(40.f, 20.f), V2(0.f, 0.f),
+		0.f, 0.f);
 
-	vec2 test[] = { { 0.f, 0.f }, { 0.f, 20.f }, { 20.f, 0.f }, { 20.f, 20.f } };
-	float sum = 0.f;
-	for (int i = 0; i < 4; ++i) {
-		vec2 dist = vec2_subv(test + 0, test + 1);
-		sum += (dist.x * dist.x + dist.y * dist.y) * 0.25f;
-		// (dotProduct(test + i, test + 0) * 0.25f);
-	}
+	SetPhysicsObject(bs, 7, V2(300.f, 200.f), V2(40.f, 20.f), V2(0.f, 0.f),
+		0.f, 0.f);
+	bs->count = 8;
+
+	addSpring(bs, 0, 1, 40.f, 0.1f, 0, 1);
+	// addSpring(bs, 1, 2, 30.f, 30.f);
+	recalculateMomentumOfInertia(bs);
 
 
-	// float momentumOfInertia = (1.f / 12.f) * 1.f * (20.f * 20.f + 20.f * 20.f);
 
-	for (int i = 0; i < count; ++i)
-	{
-		float momentumOfInertia = (1.f / 12.f) * bs->m[i] * (pow2(bs->size[i].x) + pow2(bs->size[i].y));
-		bs->momentOfInertia[i] = momentumOfInertia;
-		printf("%f \n", momentumOfInertia);
-	}
 
-	printf("%f \n", sum);
+	c->sprites.positions = bs->pos;
+	c->sprites.sizes = bs->size;
+	c->sprites.rotation = bs->rot;
+	c->sprites.count = bs->count;
+
+	
 }
+
 
 static inline Vec2 rotatePoint(Vec2* point, float angle)
 {
@@ -109,6 +150,14 @@ static inline setSprites(Sprites* s, Vec2 pos, Vec2 size, int texId, int id)
 {
 	s->positions[id] = pos;
 	s->rotation[id] = 0.f;
+	s->sizes[id] = size;
+	s->ids[id] = texId;
+}
+
+static inline setSpritesRo(Sprites* s, Vec2 pos, Vec2 size, int texId, int id, float rot)
+{
+	s->positions[id] = pos;
+	s->rotation[id] = rot;
 	s->sizes[id] = size;
 	s->ids[id] = texId;
 }
@@ -169,6 +218,9 @@ static void SetPhysicsObject(PhysicsBodies* b, int id, vec2 pos, vec2 size, vec2
 	b->acc[id] = vel;
 	b->angularVel[id] = angularVel;
 	b->rot[id] = rot;
+
+	if (b->m[id] == 0.f)
+		b->m[id] = 5.f;
 }
 
 static void recalculateMomentumOfInertia(PhysicsBodies* b)
@@ -183,10 +235,10 @@ static void recalculateMomentumOfInertia(PhysicsBodies* b)
 
 static void InitPhysicsTest(PhysicsBodies* b)
 {
-	SetPhysicsObject(b, 0, V2(100.f, 200.f), V2(40.f, 40.f), V2(0.f, 0.f),   30.f, 0.0f);
+	SetPhysicsObject(b, 0, V2(100.f, 200.f), V2(40.f, 40.f), V2(0.f, 0.f), 30.f, 0.0f);
 	SetPhysicsObject(b, 1, V2(100.f, 300.f), V2(40.f, 40.f), V2(0.f, -50.f), 2.14f, 0.1f);
-	SetPhysicsObject(b, 2, V2(40.f, 280.f),  V2(40.f, 60.f), V2(0.f, 0.0f), 0.f, 0.0f);
-	SetPhysicsObject(b, 3, V2(37.f, 140.f),  V2(40.f, 60.f), V2(0.f, 0.0f), 3.14f, 0.0f);
+	SetPhysicsObject(b, 2, V2(40.f, 280.f), V2(40.f, 60.f), V2(0.f, 0.0f), 0.f, 0.0f);
+	SetPhysicsObject(b, 3, V2(37.f, 140.f), V2(40.f, 60.f), V2(0.f, 0.0f), 3.14f, 0.0f);
 	SetPhysicsObject(b, 5, V2(380.f, 280.f), V2(60.f, 40.f), V2(0.f, 0.0f), 0.0f, 0.f); // hasdf
 	SetPhysicsObject(b, 4, V2(50.f, 50.f), V2(400.f, 40.f), V2(0.f, 0.0f), 0.f, 0.0f);
 	b->m[4] = 1000.f;
@@ -446,7 +498,7 @@ static void physics_handleCollision_2(PhysicsBodies* bs, int collIndex, int body
 		// Vec2 contactAP = vec2_subv(collisionPoint, bodyA + bs->pos);
 		// Vec2 contactBP = vec2_subv(collisionPoint, bodyB + bs->pos);
 
-		
+
 
 		Vec2 contactAP = vec2_subv(collisionPoint, bodyA + bs->pos);
 		Vec2 contactBP = vec2_subv(collisionPoint, bodyB + bs->pos);
@@ -830,6 +882,7 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 	}
 #endif
 
+
 	{ // Controls
 		const float spd = 0.8f;
 		if (isKeyDown(core, Key_R))
@@ -1209,13 +1262,14 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 	}
 
 
-
 	bs->angularVel[4] = 0.f;
 	bs->rot[4] = 0.f;
 	bs->acc[4] = V2(0.f, 0.f);
 	// move
 	vec2_add_vs(bs->vel, bs->vel, bs->acc, bs->count);
 	// vec2_add_vs(bs->pos, bs->pos, bs->vel, bs->count);
+
+	updateSprings(bs);
 
 	for (int i = 0; i < count; ++i)
 	{
@@ -1284,11 +1338,19 @@ static void drawBodies(EngineContext* context, GraphicsContext* c, GameState* st
 	drawLine(c, &test1, &test2, 0xFFFFFFFF);
 
 
-	// draw some googly eyes
-	Texture2D* eye = getTexture(&context->context.resourceHolder, Texture_circle);
-
 	PhysicsBodies* bodies = state->bodies;
 
+	// reduclant
+	Texture2D* box = getTexture(&context->context.resourceHolder, Texture_box);
+	int STARTID = 0;
+	for (int i = 0; i < bodies->count; ++i)
+	{
+		setSpritesRo(&c->sprites, bodies->pos[i], bodies->size[i], box->ID, i, bodies->rot[i]);
+		STARTID = i;
+	}
+
+	// draw some googly eyes
+	Texture2D* eye = getTexture(&context->context.resourceHolder, Texture_circle);
 	Vec2 MousePos = context->controller.mouseWorldPos;
 	for (int i = 0; i < bodies->count; ++i)
 	{
@@ -1314,10 +1376,10 @@ static void drawBodies(EngineContext* context, GraphicsContext* c, GameState* st
 		Vec2 eyePosition1 = vec2_addv(&o1, &p1);
 
 
-		setSprites(&c->sprites, eyePosition0, V2(10.f, 10.f), eye->ID, i * 4 + 13 + 0);
-		setSprites(&c->sprites, eyePosition1, V2(10.f, 10.f), eye->ID, i * 4 + 13 + 1);
-		c->sprites.colors[i * 4 + 13 + 0] = V4(1.f, 1.f, 1.f, 1.f);
-		c->sprites.colors[i * 4 + 13 + 1] = V4(1.f, 1.f, 1.f, 1.f);
+		setSprites(&c->sprites, eyePosition0, V2(10.f, 10.f), eye->ID, i * 4 + STARTID + 0);
+		setSprites(&c->sprites, eyePosition1, V2(10.f, 10.f), eye->ID, i * 4 + STARTID + 1);
+		c->sprites.colors[i * 4 + STARTID + 0] = V4(1.f, 1.f, 1.f, 1.f);
+		c->sprites.colors[i * 4 + STARTID + 1] = V4(1.f, 1.f, 1.f, 1.f);
 
 
 		const float innerEyeLen = 4.f;
@@ -1334,12 +1396,12 @@ static void drawBodies(EngineContext* context, GraphicsContext* c, GameState* st
 		vec2_add_v(&inEye0, &inEye0, &eyePosition0);
 		vec2_add_v(&inEye1, &inEye1, &eyePosition1);
 
-		setSprites(&c->sprites, inEye0, V2(3.f, 3.f), eye->ID, i * 4 + 13 + 2);
-		setSprites(&c->sprites, inEye1, V2(3.f, 3.f), eye->ID, i * 4 + 13 + 3);
-		c->sprites.colors[i * 4 + 13 + 2] = V4(0.f, 0.f, 0.f, 1.f);
-		c->sprites.colors[i * 4 + 13 + 3] = V4(0.f, 0.f, 0.f, 1.f);
+		setSprites(&c->sprites, inEye0, V2(3.f, 3.f), eye->ID, i * 4 + STARTID + 2);
+		setSprites(&c->sprites, inEye1, V2(3.f, 3.f), eye->ID, i * 4 + STARTID + 3);
+		c->sprites.colors[i * 4 + STARTID + 2] = V4(0.f, 0.f, 0.f, 1.f);
+		c->sprites.colors[i * 4 + STARTID + 3] = V4(0.f, 0.f, 0.f, 1.f);
 
 		// setSprites(&c->sprites, , V2(4.f, 4.f), eye->ID, i + 13);
-		c->sprites.count = i * 4 + 14 + 4;
+		c->sprites.count = i * 4 + STARTID;
 	}
 }
