@@ -32,8 +32,8 @@ static inline Vec2 turn(Vec2* a)
 	return V2(-a->y, a->x);
 }
 
-// uusi K * V(jousen muutos nopeus) = F
-// liikettä vastaan
+// #define PIXELS_TO_METERS 20.f
+
 static void addSpring(PhysicsBodies* bodies, int a, int b, float len, float k,
 	int vertA, int vertB)
 {
@@ -140,22 +140,12 @@ static void testPhysicsBodies(GameState* state, GraphicsContext* c, int count)
 		0.f, 0.f);
 	bs->count = 12;
 
-	const float springLength = 30.f;
-	const float springConstrain = 0.01f;
-	addSpring(bs, 10, 6,  springLength, springConstrain, 0, 3); // v jalka 
-	addSpring(bs, 10, 6,  springLength, springConstrain, 0, 1);
+	addSpring(bs, 10, 6, 30.f,  0.11f, 0, 0);
+	addSpring(bs, 10, 7, 30.f,  0.11f, 1, 0);
+	addSpring(bs, 10, 8, 30.f,  0.11f, 2, 0);
+	addSpring(bs, 10, 9, 30.f,  0.11f, 3, 0);
 
-	addSpring(bs, 10, 7,  springLength, springConstrain, 1, 2); // o jalka
-	addSpring(bs, 10, 7,  springLength, springConstrain, 1, 0);
-
-	addSpring(bs, 10, 8,  springLength, springConstrain, 2, 3); // v käsi
-	addSpring(bs, 10, 8,  springLength, springConstrain, 2, 1);
-
-	addSpring(bs, 10, 9,  springLength, springConstrain, 3, 2);
-	addSpring(bs, 10, 9,  springLength, springConstrain, 3, 0); // o käsi
-
-	addSpring(bs, 10, 11, springLength, springConstrain, 0, 0);
-	addSpring(bs, 10, 11, springLength, springConstrain, 2, 1);
+	addSpring(bs, 10, 11, 30.f, 0.04f, 0, 0);
 
 	// addSpring(bs, 0, 1, 40.f, 0.1f, 0, 1);
 	// addSpring(bs, 1, 2, 30.f, 30.f);
