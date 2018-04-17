@@ -2,7 +2,6 @@
 #include "game.h"
 
 
-static Texture2D* (*getTexture)(TextureEnum texture);
 
 void initWalls(GameState* state, Sprites* sprites, int start);
 

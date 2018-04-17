@@ -1248,7 +1248,7 @@ static void updateBodies(EngineContext* core, GameState* state, GraphicsContext*
 
 }
 
-static void drawBodies(GraphicsContext* c, GameState* state, int count)
+static void drawBodies(EngineContext* context, GraphicsContext* c, GameState* state, int count)
 {
 	//	PhysicsBody* bs = state->bodies;
 	for (int i = 0; i < count; ++i)
@@ -1283,4 +1283,63 @@ static void drawBodies(GraphicsContext* c, GameState* state, int count)
 	drawLine(c, &test1, &test2, 0xFFFFFFFF);
 	drawLine(c, &test1, &test2, 0xFFFFFFFF);
 
+
+	// draw some googly eyes
+	Texture2D* eye = getTexture(&context->context.resourceHolder, Texture_circle);
+
+	PhysicsBodies* bodies = state->bodies;
+
+	Vec2 MousePos = context->controller.mouseWorldPos;
+	for (int i = 0; i < bodies->count; ++i)
+	{
+		Vec2 p0 = bodies->verticesPositions[i * 4 + 0];
+		Vec2 p1 = bodies->verticesPositions[i * 4 + 1];
+		Vec2 p2 = bodies->verticesPositions[i * 4 + 2];
+		Vec2 p3 = bodies->verticesPositions[i * 4 + 3];
+
+		Vec2 cross0 = vec2_subv(&p0, &p2);
+		Vec2 cross1 = vec2_subv(&p1, &p3);
+		const float eyeCornerOffset = -0.3f;
+
+		float l0 = vec2_len(&cross0);
+		float l1 = vec2_len(&cross1);
+
+		vec2_normalizeInPlace(&cross0);
+		vec2_normalizeInPlace(&cross1);
+
+		Vec2 o0 = vec2_mul(&cross0, l0 * eyeCornerOffset);
+		Vec2 o1 = vec2_mul(&cross1, l1 * eyeCornerOffset);
+
+		Vec2 eyePosition0 = vec2_addv(&o0, &p0);
+		Vec2 eyePosition1 = vec2_addv(&o1, &p1);
+
+
+		setSprites(&c->sprites, eyePosition0, V2(10.f, 10.f), eye->ID, i * 4 + 13 + 0);
+		setSprites(&c->sprites, eyePosition1, V2(10.f, 10.f), eye->ID, i * 4 + 13 + 1);
+		c->sprites.colors[i * 4 + 13 + 0] = V4(1.f, 1.f, 1.f, 1.f);
+		c->sprites.colors[i * 4 + 13 + 1] = V4(1.f, 1.f, 1.f, 1.f);
+
+
+		const float innerEyeLen = 4.f;
+
+		Vec2 toMouse0 = vec2_subv(&MousePos, &eyePosition0);
+		Vec2 toMouse1 = vec2_subv(&MousePos, &eyePosition1);
+
+		vec2_normalizeInPlace(&toMouse0);
+		vec2_normalizeInPlace(&toMouse1);
+
+		Vec2 inEye0 = vec2_mul(&toMouse0, innerEyeLen);
+		Vec2 inEye1 = vec2_mul(&toMouse1, innerEyeLen);
+
+		vec2_add_v(&inEye0, &inEye0, &eyePosition0);
+		vec2_add_v(&inEye1, &inEye1, &eyePosition1);
+
+		setSprites(&c->sprites, inEye0, V2(3.f, 3.f), eye->ID, i * 4 + 13 + 2);
+		setSprites(&c->sprites, inEye1, V2(3.f, 3.f), eye->ID, i * 4 + 13 + 3);
+		c->sprites.colors[i * 4 + 13 + 2] = V4(0.f, 0.f, 0.f, 1.f);
+		c->sprites.colors[i * 4 + 13 + 3] = V4(0.f, 0.f, 0.f, 1.f);
+
+		// setSprites(&c->sprites, , V2(4.f, 4.f), eye->ID, i + 13);
+		c->sprites.count = i * 4 + 14 + 4;
+	}
 }
