@@ -1,6 +1,7 @@
 #pragma once 
 #include "vec2.h" // visual studio drunk
 #define MAX_P_BODIES 100
+#define PHYSICS_STEPS 12
 
 typedef struct {
 	int first;
@@ -46,8 +47,11 @@ typedef struct
 	int count;
 
 	Springs springs;
-} PhysicsBodies;
 
+	int frozenBodies[MAX_P_BODIES];
+	int frozenCount;
+} PhysicsBodies;
+// todo: benchmark and bundle relevant
 
 typedef struct
 {
@@ -64,3 +68,4 @@ typedef struct
 static void testPhysicsBodies(GameState* state, GraphicsContext* c, int count);
 static void SetPhysicsObject(PhysicsBodies* b, int id, vec2 pos, vec2 size, vec2 vel, float rot, float angularVel);
 static void recalculateMomentumOfInertia(PhysicsBodies* b);
+static void InitPhysicsTest(PhysicsBodies* b);

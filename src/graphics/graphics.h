@@ -10,7 +10,7 @@
 #include "shader.c"
 
 
-#define MAX_SPRITES 800000
+#define MAX_SPRITES 200
 
 typedef struct 
 {
@@ -88,6 +88,7 @@ EXPORT DRAW_GAME(drawGraphics);
 
 GLenum glCheckError__(const char *file, int line)
 {
+#ifndef __EMSCRIPTEN__
 	GLenum errorCode;
 	while ((errorCode = glGetError()) != GL_NO_ERROR)
 	{
@@ -105,4 +106,7 @@ GLenum glCheckError__(const char *file, int line)
 		LOGI("%s | %s (%i)\n", error, file, line);
 	}
 	return errorCode;
+#else
+	return 0;
+#endif
 }

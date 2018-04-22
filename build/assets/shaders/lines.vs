@@ -4,7 +4,6 @@ attribute vec2 vPosition;
 attribute vec4 inColor;
 // color, colour hahaaa!!!
 varying vec4 outColour;
-
 uniform mat4 position;
 
 void main()

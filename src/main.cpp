@@ -55,8 +55,8 @@ void initMemory(ApplicationFunctions* app, uint64 size)
 // #include <glad/glad.h> #include "glad.c"
 
 
-#ifndef __EMSCRIPTEN__
 #include "hotreload.cpp" // must be after appfuncs
+#ifndef __EMSCRIPTEN__
 #include "Imgui/imgui.h"
 #include "Imgui/imgui_demo.cpp"
 #include "Imgui/imgui_impl_sdl_gl3.cpp"
@@ -66,8 +66,8 @@ void initMemory(ApplicationFunctions* app, uint64 size)
 #include <emscripten.h>
 #include <functional>
 
-#include "application/game.cpp"
-#include "graphics/graphics.cpp"
+#include "graphics/graphics.c"
+#include "application/game.c"
 
 std::function<void()> loop;
 static void main_loop() { loop(); }
@@ -85,7 +85,7 @@ extern "C" int mainf()
 	SDL_Init(SDL_INIT_EVERYTHING);
 
 
-	const char* windowName = "hello sdl";
+	const char* windowName = "Fysiikka";
 	int width = 1024; int height = 860;
 
 #ifndef __EMSCRIPTEN__
@@ -166,13 +166,16 @@ extern "C" int mainf()
 	initMemory(&graphics, Megabytes(32));
 
 #ifdef __EMSCRIPTEN__
-	app.gameInitPtr = initGame;
+	app.gameInitPtr   = initGame;
 	app.gameUpdatePtr = updateGame;
-	app.gameDrawPtr = drawGame;
+	app.gameDrawPtr   = drawGame;
 
-	app.gameInitPtr = initGraphics;
-	app.gameUpdatePtr = updateGraphics;
-	app.gameDrawPtr = drawGraphics;
+	graphics.gameInitPtr   = initGraphics;
+	graphics.gameUpdatePtr = updateGraphics;
+	graphics.gameDrawPtr   = drawGraphics;
+
+	// printf("%p ", app.gameInitPtr);
+	// printf("%p ", app.gameDrawPtr);
 #endif
 
 
@@ -192,12 +195,17 @@ extern "C" int mainf()
 
 
 	float dt = 0.f;
+	Uint64 NOW = SDL_GetPerformanceCounter();
+	Uint64 LAST = 0;
+
 #ifndef __EMSCRIPTEN__
 	while (!quit) {
 #else
 	loop = [&] {
 #endif
-		auto timePoint1(std::chrono::high_resolution_clock::now());
+	//	auto timePoint1(std::chrono::high_resolution_clock::now());
+		LAST = NOW;
+		NOW = SDL_GetPerformanceCounter();
 
 		SDL_Event e;
 		while (SDL_PollEvent(&e))
@@ -317,10 +325,13 @@ extern "C" int mainf()
 		}
 
 
+#ifndef __EMSCRIPTEN__
 		update(&app);
-
 		if (update(&graphics))
 			engine.reloadGraphics = true;
+#else
+//		engine.dt = 16.f / 100.f; 
+#endif
 #endif
 
 		callUpdate(&engine, &app);
@@ -330,26 +341,30 @@ extern "C" int mainf()
 
 		controller_updateKeys(&engine.controller);
 
-
-		Vec2 mousePos = convertScreenToWorld(&engine.context.camera, engine.controller.mousePos, &engine.windowDims);
-		ImGui::Text("Mouse (%f %f)", mousePos.x, mousePos.y);
-		engine.controller.mouseWorldPos = mousePos;
-
+		{
+			Vec2 mousePos = convertScreenToWorld(&engine.context.camera, engine.controller.mousePos, &engine.windowDims);
+			engine.controller.mouseWorldPos = mousePos;
 #ifndef __EMSCRIPTEN__
-		ImGui::Render();
+			ImGui::Text("Mouse (%f %f)", mousePos.x, mousePos.y);
+			ImGui::Render();
 #endif
+		}
 
 		SDL_GL_SwapWindow(window);
 
-		auto timePoint2(std::chrono::high_resolution_clock::now());
-		auto elapsedTime(timePoint2 - timePoint1);
-		float ft = { std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).count() };
-		dt = ft;
-		float ftSeconds = (ft / 1000.f);
-		engine.dt = ftSeconds;
+		//auto timePoint2(std::chrono::high_resolution_clock::now());
+		//auto elapsedTime(timePoint2 - timePoint1);
+		//float ft = { std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).count() };
 
+		//dt = ft;
+		//float ftSeconds = (ft / 1000.f);
+		//engine.dt = ft;
+
+		dt = ((NOW - LAST) / (double)SDL_GetPerformanceFrequency() ); 
+		engine.dt = dt;
 		// LOGI("DT: %f \n", engine.dt);
-//		LOGI("STILL ALIVE\n");
+		// LOGI("STILL ALIVE\n");
+
 	};
 
 

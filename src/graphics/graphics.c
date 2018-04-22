@@ -118,6 +118,7 @@ static void initLineBatcher(LineBatcher* lineBatcher)
 
 static void renderLines(LineBatcher* lineBatcher, Lines* lines, mat4x4* cam)
 {
+#ifndef __EMSCRIPTEN__
 	shader_use(&lineBatcher->shader);
 
 //	shader_set_mat4(&lineBatcher->shader, "position", mat);
@@ -132,7 +133,7 @@ static void renderLines(LineBatcher* lineBatcher, Lines* lines, mat4x4* cam)
 
 	glDrawArrays(GL_LINES, 0, lines->count * 2);
 	glCheckError();
-
+#endif
 	da_clear(lines->colors);
 	da_clear(lines->lineVertices);
 	lines->count = 0;
@@ -676,7 +677,6 @@ void renderBatch(Sprites* sprites, SpriteBatch* sb, mat4x4* cam)
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sb->buffers[INDEX]);
 	glDrawElements(GL_TRIANGLES, vertexData->indicesCount, GL_UNSIGNED_INT, 0);
-
 }
 
 static bool32 IsPowerOfTwo(unsigned long x)
@@ -833,7 +833,7 @@ EXPORT INIT_GAME(initGraphics)
 
 		initSpriteBatch(&spriteBatch);
 
-		Geom_spritebatch_init(&geomSpriteBat);
+		// Geom_spritebatch_init(&geomSpriteBat);
 
 		initLineBatcher(&lineBatcher);
 	}
@@ -1017,6 +1017,7 @@ EXPORT DRAW_GAME(drawGraphics)
 
 
 	// prepareBatch(&c->sprites, &spriteBatch);
+#if 0
 	static Sprites testSprites;
 	static int init = false;
 	if (!init)
@@ -1052,15 +1053,15 @@ EXPORT DRAW_GAME(drawGraphics)
 		testSprites.rotation = rot;
 		testSprites.count = TEST_COUNT;
 	}
-
 	// c->sprites = testSprites;
+#endif
+
 
 	updateCamera(&camera, &c->camera, &engine->windowDims);
 
-
-	static float counter = 0.f;
-	counter += 0.1f * engine->dt;
-	testSprites.positions[1].y = sin(counter) * 5.f;
+//	static float counter = 0.f;
+//	counter += 0.1f * engine->dt;
+//	testSprites.positions[1].y = sin(counter) * 5.f;
 
 	prepareBatch(&c->sprites, &spriteBatch);
 	renderBatch(&c->sprites, &spriteBatch, &camera.cameraMatrix);
@@ -1068,12 +1069,7 @@ EXPORT DRAW_GAME(drawGraphics)
 //	geom_prepareBatch(&c->sprites, &geomSpriteBat);
 //	Geom_renderBatch(&c->sprites, &geomSpriteBat, &camera.cameraMatrix);
 
-	Vec2 a = { 10.f, 20.f };
-	Vec2 g = { 10.f, 30.f };
 
-	drawLine(c, &a, &g, 0xFF00FFFF);
-
-	drawLine(c, &a, &g, 0xFF00FFFF);
 
 	renderLines(&lineBatcher, &c->lines, &camera.cameraMatrix);
 }

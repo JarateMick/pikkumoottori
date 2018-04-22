@@ -13,19 +13,15 @@
 #include "../platform.h"
 
 #define WALL_COLLISION_E 0.5f
-#define PARTICLE_COUNT 500
+#define PARTICLE_COUNT 200
 // #define GRAVITY -9.81f / 2.f
 #define GRAVITY 12000*-9.8f
 #define RADIUS 5.f
 #define SPEED 40.f
 
+#ifndef __EMSCRIPTEN__
 static Texture2D* (*getTexture)(ResourceHolder* h, TextureEnum texture);
-
-static inline Vec2 V2(float x, float y)
-{
-	Vec2 result = { x, y };
-	return result;
-}
+#endif
 
 static inline vec3 V3(float x, float y, float z)
 {
@@ -39,7 +35,6 @@ static inline vec4 V4(float x, float y, float z, float w)
 	return result;
 }
 
-// hylkiminen
 typedef struct
 {
 	Vec2  position;
@@ -51,8 +46,8 @@ typedef struct
 	float pressure;
 } Particle;
 
-#define BENCH_COUNT 3000
-#define ENTS_COUNT 100000
+#define BENCH_COUNT 200
+#define ENTS_COUNT  300
 typedef struct
 {
 	Vec2 pos[ENTS_COUNT];

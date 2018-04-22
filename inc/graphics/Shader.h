@@ -74,10 +74,14 @@ Shader shader_compile_shaders_from_source_g(const char * vertexSrc, const char *
 	glCompileShader(fragment);
 	checkCompileErrors(fragment, "FRAGMENT", fragmentName);
 
+#ifndef __EMSCRIPTEN__
 	geo = glCreateShader(GL_GEOMETRY_SHADER);
 	glShaderSource(geo, 1, &geoSrc, NULL);
 	glCompileShader(geo);
 	checkCompileErrors(geo, "GEO", fragmentName);
+#else
+	geo = -1;
+#endif
 
 	// shader Program
 	result.ID = glCreateProgram();

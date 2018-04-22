@@ -53,13 +53,19 @@ static void unloadGameDll(ApplicationFunctions* app)
 	app->gameInitPtr = app->gameUpdatePtr = app->gameDrawPtr = 0;
 }
 
+
+
 static time_t getWriteTime(const char* filename)
 {
+#ifndef __EMSCRIPTEN__
 	struct stat stats;
 	stat(filename, &stats);
 
 	time_t mtime = stats.st_mtime; /* seconds since the epoch */
 	return mtime;
+#else
+	return -1;
+#endif
 }
 
 static bool loadGameDll(ApplicationFunctions* app, const char* dllName)

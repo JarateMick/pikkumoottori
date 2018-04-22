@@ -16,7 +16,9 @@ EXPORT INIT_GAME(initGame)
 		// c-.camera.position = 
 	}
 
+#ifndef __EMSCRIPTEN__
 	getTexture = c->funcs.getTexture;
+#endif
 
 	GameState* state = (GameState*)mem->memory;
 	memset(state, 0, sizeof(GameState));
@@ -124,7 +126,7 @@ static void makeWall(Sprites* s, Vec2 pos, Vec2 size, int id)
 	makeSprite(s, pos, size, id);
 }
 
-static void initWalls(GameState* state, Sprites* s, int texId, int startIndex)
+void initWalls(GameState* state, Sprites* s, int texId, int startIndex)
 {
 	// bottom
 	makeWall(s, V2(0.f, 0.f), V2(10.f, 100.f), texId);
@@ -148,7 +150,9 @@ EXPORT UPDATE_GAME(updateGame)
 	Entitys* test = &gameState->ents;
 
 
+#ifndef __EMSCRIPTEN__
 	getTexture = engine->context.funcs.getTexture; // TODO
+#endif
 
 #if 0
 	if (engine->runToFrame > engine->currentFrame || engine->freeRun)
@@ -170,9 +174,15 @@ EXPORT UPDATE_GAME(updateGame)
 #endif
 
 
-
 	
-	updateBodies(engine, gameState, &engine->context, engine->controller.mouseWorldPos, engine->dt);
+#if 1
+	for (int i = 0; i < PHYSICS_STEPS; ++i)
+	{
+		// printf("%f \n", engine->dt / (float)PHYSICS_STEPS);
+		updateBodies(engine, gameState, &engine->context, 
+			engine->controller.mouseWorldPos, engine->dt / (float)PHYSICS_STEPS);
+	}
+#endif
 
 #if 0
 
@@ -205,7 +215,7 @@ EXPORT UPDATE_GAME(updateGame)
 	for (int i = BENCH_COUNT / 2; i < BENCH_COUNT; ++i)
 	{
 		test->rotation[i] -= test->vel[i].x;
-	}
+	} 
 #endif
 }
 

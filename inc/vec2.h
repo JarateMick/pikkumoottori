@@ -35,6 +35,44 @@ struct Vec2
 };
 typedef Vec2 vec2;
 
+static inline Vec2 V2(float x, float y)
+{
+	Vec2 result = { x, y };
+	return result;
+}
+
+#define VEC2_0 V2(0.f, 0.f)
+
+static inline float dotProduct(Vec2* a, Vec2* b)
+{
+	return a->x * b->x + a->y * b->y;
+}
+
+static inline float crossProduct(Vec2* a, Vec2* b)
+{
+	return a->x * b->y - a->y * b->x;
+}
+
+static inline float pow2(float x)
+{
+	return x * x;
+}
+
+static inline Vec2 CrossProductVS(const Vec2* a, float s)
+{
+	return V2(-s * a->y, s * a->x);
+}
+
+static inline Vec2 CrossProductSV(float s, const Vec2* a)
+{
+	return V2(-s * a->y, s * a->x);
+}
+
+static inline Vec2 turn(Vec2* a)
+{
+	return V2(-a->y, a->x);
+}
+
 static inline Vec2 vec2_subv(Vec2* a, Vec2* b)
 {
 	Vec2 result;

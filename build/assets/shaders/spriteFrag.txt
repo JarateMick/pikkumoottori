@@ -34,9 +34,9 @@ void main()
 		else if (tid == 7)
 			texColor = texture2D(textures[7], texCoord);
 	//	}
+	// texColor = texture2D(textures[2], texCoord);
 		
-		// texColor = texture2D(textures[2], texCoord);
-		gl_FragColor = texColor * colour;
+	gl_FragColor = texColor * colour;
 
 //		gl_FragColor = c1 * (1.0 - intensity * 2.0) + color2 * intensity * 2.0;
 }

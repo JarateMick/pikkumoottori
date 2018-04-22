@@ -23,7 +23,7 @@ char* io_read_file(const char* path)
 			long bufsize = ftell(file);
 			if (bufsize == -1) { /* Error */ }
 
-			result = malloc(sizeof(char) * (bufsize + 1));
+			result = (char*)malloc(sizeof(char) * (bufsize + 1));
 
 			if (fseek(file, 0L, SEEK_SET) != 0) { /* Error */ }
 
@@ -44,7 +44,7 @@ char* io_read_file(const char* path)
 		ASSERT(0);
 		// logging
 	}
-	printf("%s\n", result);
+	// printf("%s\n", result);
 	return result;
 }
 
