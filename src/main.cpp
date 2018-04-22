@@ -88,6 +88,11 @@ extern "C" int mainf()
 	const char* windowName = "Fysiikka";
 	int width = 1024; int height = 860;
 
+#ifdef __EMSCRIPTEN__ 
+	width  /= 2;
+	height /= 2;
+#endif
+
 #ifndef __EMSCRIPTEN__
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
