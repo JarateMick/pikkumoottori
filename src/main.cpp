@@ -122,6 +122,7 @@ extern "C" int mainf()
 	SDL_Window* window = SDL_CreateWindow(windowName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, flags);
 #endif
 
+
 	if (!window)
 	{
 		// debugBreak();
@@ -167,8 +168,8 @@ extern "C" int mainf()
 #ifndef __EMSCRIPTEN__
 	initializeApplication(&graphics, "graphics", "initGraphics", "updateGraphics", "drawGraphics");
 #endif
-	initMemory(&app, Megabytes(64));
-	initMemory(&graphics, Megabytes(32));
+	initMemory(&app, Megabytes(4));
+	initMemory(&graphics, Megabytes(1));
 
 #ifdef __EMSCRIPTEN__
 	app.gameInitPtr   = initGame;

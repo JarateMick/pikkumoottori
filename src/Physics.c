@@ -237,7 +237,7 @@ void InitPhysicsTest(PhysicsBodies* b)
 	SetPhysicsObject(b, 0, V2(100.f, 200.f), V2(40.f, 40.f), V2(0.f, 0.f), 30.f, 0.0f);
 	SetPhysicsObject(b, 1, V2(100.f, 300.f), V2(40.f, 40.f), V2(0.f, -50.f), 2.14f, 0.1f);
 	SetPhysicsObject(b, 2, V2(40.f, 280.f), V2(40.f, 60.f), V2(0.f, 0.0f), 0.f, -0.3f);
-	SetPhysicsObject(b, 3, V2(37.f, 140.f), V2(40.f, 60.f), V2(0.f, 0.0f), 3.14f, 0.0f);
+	SetPhysicsObject(b, 3, V2(37.f, 180.f), V2(40.f, 60.f), V2(0.f, 0.0f), 3.14f / 1.5f, 0.0f);
 	SetPhysicsObject(b, 5, V2(-50.f, 666.f), V2(60.f, 40.f), V2(0.f, 0.0f), -2.0f, 1.f); // hasdf
 
 	SetPhysicsObject(b, 8, V2(-150.f, 300.f), V2(60.f, 40.f), V2(0.f, 0.0f), 0.8f, 2.f); // hasdf
