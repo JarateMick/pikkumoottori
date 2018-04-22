@@ -11,7 +11,7 @@ EXPORT INIT_GAME(initGame)
 	// zoom(&c->camera, 1.f);
 
 	{
-		c->camera.scale = 1.f; // default scale
+		c->camera.scale = 0.5f; // default scale
 		c->camera.needUpdate = true;
 		// c-.camera.position = 
 	}
